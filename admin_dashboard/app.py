@@ -106,11 +106,51 @@ def encrypt_pw(pw):
 def decrypt_pw(enc_pw):
     if not enc_pw: return ""
     try:
+        # 1. Try decrypting with the new 64-char HWID key
         key = get_crypto_key().encode('utf-8')
         data = base64.b64decode(enc_pw)
         res = bytes([b ^ key[i % len(key)] for i, b in enumerate(data)])
-        return res.decode('utf-8')
-    except: return enc_pw
+        decrypted_new = res.decode('utf-8')
+    except:
+        decrypted_new = None
+
+    try:
+        # 2. Try decrypting with the legacy 16-char HWID key
+        import uuid
+        old_key = hashlib.sha256(str(uuid.getnode()).encode()).hexdigest()[:16].upper()
+        old_key_bytes = old_key.encode('utf-8')
+        data = base64.b64decode(enc_pw)
+        res_old = bytes([b ^ old_key_bytes[i % len(old_key_bytes)] for i, b in enumerate(data)])
+        decrypted_old = res_old.decode('utf-8')
+    except:
+        decrypted_old = None
+
+    if decrypted_new is None and decrypted_old is None:
+        return enc_pw
+    if decrypted_new is not None and decrypted_old is None:
+        return decrypted_new
+    if decrypted_old is not None and decrypted_new is None:
+        return decrypted_old
+
+    # Both decrypted. Determine which is the real password (printable & alphanumeric ratio).
+    import string
+    printable_chars = set(string.ascii_letters + string.digits + string.punctuation + ' ')
+    
+    new_is_printable = all(c in printable_chars for c in decrypted_new) and any(c.isalnum() for c in decrypted_new)
+    old_is_printable = all(c in printable_chars for c in decrypted_old) and any(c.isalnum() for c in decrypted_old)
+
+    if new_is_printable and not old_is_printable:
+        return decrypted_new
+    if old_is_printable and not new_is_printable:
+        return decrypted_old
+
+    new_alnum_ratio = sum(1 for c in decrypted_new if c.isalnum()) / len(decrypted_new) if decrypted_new else 0
+    old_alnum_ratio = sum(1 for c in decrypted_old if c.isalnum()) / len(decrypted_old) if decrypted_old else 0
+
+    if old_alnum_ratio > new_alnum_ratio:
+        return decrypted_old
+    return decrypted_new
+
 
 # --- 1. Setup & Functions ---
 TEMPLATE_FILE = config.LOCAL_TEMPLATE_FILE
@@ -1714,4 +1754,33 @@ elif st.session_state['active_page'] == 'Guide':
         *   **OS**: Windows 10/11 (64bit)
         *   **Browser**: 최신 버전의 Google Chrome 설치 필수
         """)
+        
+        # [NEW] Guide page end Customer Support link
+        st.divider()
+        st.subheader("💡 해결되지 않은 문제가 있나요?")
+        st.markdown("3Monster 통합 고객센터를 통해 오류 로그와 함께 문의해 주시면 신속히 답변 드리겠습니다.")
+        st.markdown("""
+            <div style='margin-top: 15px;'>
+                <a href='http://localhost:5173/support' target='_blank' style='text-decoration: none;'>
+                    <span style='background-color: #6200EE; color: white; font-size: 0.95rem; font-weight: 800; padding: 12px 24px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(98, 0, 238, 0.2); transition: all 0.2s;'>
+                        🔱 3Monster 고객센터 문의하기
+                    </span>
+                </a>
+            </div>
+        """, unsafe_allow_html=True)
+
+# [NEW] Persistent Footer Customer Support Link
+st.markdown("<br><br>", unsafe_allow_html=True)
+footer_col1, footer_col2 = st.columns([4.2, 1])
+with footer_col2:
+    st.markdown("""
+        <div style='text-align: right; margin-bottom: 20px;'>
+            <a href='http://localhost:5173/support' target='_blank' style='text-decoration: none;'>
+                <span style='color: #94A3B8; font-size: 0.85rem; font-weight: 800; border: 1.5px solid #94A3B8; padding: 6px 14px; border-radius: 8px; display: inline-block; transition: all 0.2s;'>
+                    🛠️ 3Monster 고객센터
+                </span>
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+
 
