@@ -108,13 +108,13 @@ def cleanup():
             print(f"- Copying and writing dist files into: {dist_folder_name}...")
             
             # [A] Create Dynamic Version-Correct Batch Launcher
-            launcher_path = os.path.join(dist_final_dir, "NPlace-DB-실행.bat")
+            launcher_path = os.path.join(dist_final_dir, "zip풀고 최초 1회실행.bat")
             launcher_content = f"""@echo off
 setlocal
 title NPlace-DB Launcher
 
 echo ======================================================
-echo   NPlace-DB 프로그램 시작 중...
+echo   NPlace-DB 시스템 자가 진단 및 기동 중...
 echo ======================================================
 echo.
 
@@ -151,7 +151,7 @@ exit
 """
             with open(launcher_path, "w", encoding="euc-kr") as lf:
                 lf.write(launcher_content)
-            print("  Created: NPlace-DB-실행.bat")
+            print("  Created: zip풀고 최초 1회실행.bat")
 
             # [B] Copy docs/ folder (clean documents)
             dist_docs_dir = os.path.join(dist_final_dir, "docs")
@@ -160,43 +160,34 @@ exit
             shutil.copytree(os.path.join(root_dir, "docs"), dist_docs_dir)
             print("  Copied: docs/ folder")
 
-            # [C] Create Clean 사용방법_필독(처음 실행시 필수 확인).txt pointing to in-app guide and execution tips
-            readme_path = os.path.join(dist_final_dir, "사용방법_필독(처음 실행시 필수 확인).txt")
+            # [C] Create Clean 사용전_필독.txt pointing to in-app guide and simplified tips
+            readme_path = os.path.join(dist_final_dir, "사용전_필독.txt")
             readme_content = f"""======================================================
-🎯 N-Place-DB Pro 사용 전 필수 확인 가이드 (v{v})
+🎯 N-Place-DB Pro 사용 전 필수 확인 (v{v})
 ======================================================
 
-N-Place-DB Pro 프로그램을 구매해주셔서 대단히 감사합니다.
-안전하고 원활한 실행을 위해 처음 실행 시 반드시 아래의 3가지 사항을 확인해주세요!
+안전하고 원활한 실행을 위해 아래 딱 3가지만 확인해주세요!
 
-1. 📂 [올바른 압축 풀기 경로 설정]
-   - 다운로드한 ZIP 파일은 반드시 아래와 같이 일반 사용자 권한 폴더에 압축을 풀어야 합니다.
-   * [권장] 바탕화면(Desktop), 다운로드(Downloads) 폴더, 혹은 C드라이브 바로 밑 (C:\\NPlace-DB)
-   ⚠️ 주의: 시스템 보호 구역인 "C:\\Program Files" 하위에는 절대 풀지 마세요. 권한 에러가 발생할 수 있습니다.
+1. 📂 [바탕화면에 압축 풀기]
+   - 다운로드한 ZIP 파일은 반드시 [바탕화면]이나 [C드라이브 루트]에 풀어주세요.
+   ⚠️ 주의: C:\\Program Files 폴더 밑에 풀면 실행 권한 오류가 발생합니다.
 
-2. 🛡️ [백신 프로그램 오진 및 실시간 예외 설정]
-   - 본 프로그램은 마케팅 자동화 보조 도구로, 윈도우 디펜더나 알약, V3 등이 간혹 "정식 서명되지 않은 앱"이라는 이유로 바이러스로 오진하거나 차단하는 경우가 발생합니다.
-   - 실행 시 오류가 뜨거나 파일이 지워질 경우:
-     ① 해당 백신 실시간 감시를 잠시 끄시거나
-     ② 백신 설정 내 [검사 예외 대상 설정] 메뉴에서 압축 해제된 "NPlace-DB 전체 폴더"를 예외로 등록해주세요.
+2. 🚀 [프로그램 실행 방법]
+   - 폴더 내의 [ NPlace-DB-v{v}.exe ]를 더블클릭하여 바로 실행하시면 됩니다.
+   ⚠️ 만약 실행 시 "VCRUNTIME140.dll 누락" 등 시스템 오류창이 뜬다면,
+      옆에 있는 [ zip풀고 최초 1회실행.bat ] 파일을 가동하여 10초 만에 해결하시면 됩니다.
 
-3. 🚀 [프로그램 실행 방법]
-   - 압축을 푼 폴더 내부의 [ NPlace-DB-실행.bat ] 파일을 마우스 더블클릭하여 실행합니다.
-   * 최초 실행 시 윈도우 검은색 창(배치 콘솔)이 켜지며 필수 런타임(Visual C++) 설치를 권장할 수 있습니다. 
-     해당 안내가 뜨면 화면 지시에 따라 설치 완료 후 다시 켜주시면 됩니다.
+3. 🛡️ [백신 오진 대처법]
+   - 본 마케팅 도구 실행 시 윈도우 디펜더/V3/알약 등이 바이러스로 오진하여 차단할 수 있습니다.
+   - 실행이 안 되거나 파일이 지워질 경우, 해당 백신 실시간 감시를 잠시 끄시거나 
+     [검사 예외 대상 설정] 메뉴에서 압축을 푼 폴더 전체를 예외 등록해주세요.
 
-4. 📖 [세부 사용 가이드 및 마케팅 꿀팁]
-   - 인증이 완료되고 메인 프로그램 화면(대시보드)이 열리면 상단 메뉴의 [📖 가이드] 탭을 눌러주세요.
-   - 플레이스 마케팅에 필요한 타겟 선정 요령, 인스타 계정 스팸 분류 우회법, 맞춤형 템플릿 제작 가이드 등 실전 노하우가 고스란히 탑재되어 있습니다.
-
-======================================================
-상용 마케팅 솔루션 수준의 가치와 안정적인 기동을 약속드립니다.
-문제가 발생할 경우 관리자에게 편하게 문의해주세요!
+※ 상세 마케팅 노하우 및 기능 꿀팁은 대시보드 내의 [📖 가이드] 탭에 고스란히 담겨 있습니다!
 ======================================================
 """
             with open(readme_path, "w", encoding="utf-8-sig") as rf:
                 rf.write(readme_content)
-            print("  Created: 사용방법_필독(처음 실행시 필수 확인).txt")
+            print("  Created: 사용전_필독.txt")
 
             # [D] Copy dependencies folder
             dep_src = os.path.join(root_dir, "dependencies")
