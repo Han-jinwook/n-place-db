@@ -69,10 +69,11 @@ def build():
         PyInstaller.__main__.run(args)
         print("\n[Build] PyInstaller compilation completed successfully!")
         
-        # 4. Invoke Automated Packaging & Zip
-        import prepare_dist
-        print("\n[Build] Launching prepare_dist.py to sanitize and package the final ZIP...")
-        prepare_dist.cleanup()
+        # 4. Invoke Automated Packaging & Zip (Temporarily disabled as requested)
+        # import prepare_dist
+        # print("\n[Build] Launching prepare_dist.py to sanitize and package the final ZIP...")
+        # prepare_dist.cleanup()
+        print("\n[Build] Automated zipping skipped as requested.")
         
     except Exception as e:
         print(f"\nBuild Failed: {e}")
