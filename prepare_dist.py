@@ -107,6 +107,17 @@ def cleanup():
         try:
             print(f"- Copying and writing dist files into: {dist_folder_name}...")
             
+            # Remove old legacy files to prevent duplicates
+            old_files = ["NPlace-DB-실행.bat", "사용방법_필독(처음 실행시 필수 확인).txt"]
+            for old_file in old_files:
+                old_file_path = os.path.join(dist_final_dir, old_file)
+                if os.path.exists(old_file_path):
+                    try:
+                        os.remove(old_file_path)
+                        print(f"  Removed legacy residual file: {old_file}")
+                    except Exception as e:
+                        print(f"  Warning removing {old_file}: {e}")
+
             # [A] Create Dynamic Version-Correct Batch Launcher
             launcher_path = os.path.join(dist_final_dir, "zip풀고 최초 1회실행.bat")
             launcher_content = f"""@echo off
