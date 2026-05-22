@@ -1327,3 +1327,32 @@ elif page == 'Guide':
     st.markdown("- 원하지 않는 데이터는 목록에서 클릭하여 선택한 후, ✕ 삭제 버튼을 눌러 목록에서 지울 수 있습니다.")
     st.markdown("- 화면 상단의 **CSV 다운로드 버튼**을 누르면 전체 데이터가 다운로드됩니다.")
     st.markdown("- ⚠️ **주의:** 브라우저 다운로드 폴더에 저장되거나, 최초 프로그램 창에서 'CSV 저장' 버튼을 누르면 프로그램 폴더 내 `exports/` 안에 엑셀/CSV 파일이 저장됩니다.")
+
+    # [NEW] Guide page end Customer Support link
+    st.divider()
+    st.subheader("💡 해결되지 않은 문제가 있나요?")
+    st.markdown("3Monster 통합 고객센터를 통해 오류 로그와 함께 문의해 주시면 신속히 답변 드리겠습니다.")
+    st.markdown("""
+        <div style='margin-top: 15px;'>
+            <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
+                <span style='background-color: #6200EE; color: white; font-size: 0.95rem; font-weight: 800; padding: 12px 24px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(98, 0, 238, 0.2); transition: all 0.2s;'>
+                    🔱 3Monster 고객센터 문의하기
+                </span>
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+
+# [NEW] Persistent Footer Customer Support Link
+st.markdown("<br><br>", unsafe_allow_html=True)
+footer_col1, footer_col2 = st.columns([4.2, 1])
+with footer_col2:
+    st.markdown("""
+        <div style='text-align: right; margin-bottom: 20px;'>
+            <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
+                <span style='color: #94A3B8; font-size: 0.85rem; font-weight: 800; border: 1.5px solid #94A3B8; padding: 6px 14px; border-radius: 8px; display: inline-block; transition: all 0.2s;'>
+                    🛠️ 3Monster 고객센터
+                </span>
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+

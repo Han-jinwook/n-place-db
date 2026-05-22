@@ -1623,7 +1623,7 @@ if st.session_state['active_page'] == 'Shop Search':
                 st.toast("로그가 클립보드에 복사되었습니다!")
                 time.sleep(1)
                 # 허브 앱 고객센터로 이동 (이메일 파라미터 포함)
-                support_url = f"https://3monster-hub.netlify.app/#/support?email={st.session_state.get('email_user', '')}"
+                support_url = f"https://3monster.net/support?email={st.session_state.get('email_user', '')}"
                 st.markdown(f'<a href="{support_url}" target="_blank" id="go_support">이동 중...</a>', unsafe_allow_html=True)
                 st.write(f'<script>document.getElementById("go_support").click();</script>', unsafe_allow_html=True)
 
@@ -1761,7 +1761,7 @@ elif st.session_state['active_page'] == 'Guide':
         st.markdown("3Monster 통합 고객센터를 통해 오류 로그와 함께 문의해 주시면 신속히 답변 드리겠습니다.")
         st.markdown("""
             <div style='margin-top: 15px;'>
-                <a href='http://localhost:5173/support' target='_blank' style='text-decoration: none;'>
+                <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
                     <span style='background-color: #6200EE; color: white; font-size: 0.95rem; font-weight: 800; padding: 12px 24px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(98, 0, 238, 0.2); transition: all 0.2s;'>
                         🔱 3Monster 고객센터 문의하기
                     </span>
@@ -1775,7 +1775,7 @@ footer_col1, footer_col2 = st.columns([4.2, 1])
 with footer_col2:
     st.markdown("""
         <div style='text-align: right; margin-bottom: 20px;'>
-            <a href='http://localhost:5173/support' target='_blank' style='text-decoration: none;'>
+            <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
                 <span style='color: #94A3B8; font-size: 0.85rem; font-weight: 800; border: 1.5px solid #94A3B8; padding: 6px 14px; border-radius: 8px; display: inline-block; transition: all 0.2s;'>
                     🛠️ 3Monster 고객센터
                 </span>

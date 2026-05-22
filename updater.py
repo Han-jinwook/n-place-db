@@ -1,75 +1,63 @@
+# 🔱 Monster 공통 라이브러리 연동 - updater.py (NPlace-DB)
+# - 버전: v1.1
+# - 갱신 일시: 2026-05-19
+# - 관리 주체: Monster 총괄 AI (Hub AI)
+
 import os
 import sys
-import requests
 import logging
 import subprocess
-from datetime import datetime
-from sb_auth_manager import SupabaseAuthManager
+import requests
 import config
+from 라이브러리.updater import MonsterUpdater as CommonUpdater
 
 logger = logging.getLogger(__name__)
 
 class MonsterUpdater:
     """
-    [3Monster] 표준 자동 업데이트 엔진 (Monster Updater v1.0)
-    수파베이스와 연동하여 개별 앱의 버전을 관리하고 업데이트를 수행합니다.
+    [3Monster] 표준 자동 업데이트 엔진 (공통 라이브러리 연동 브릿지 버전)
+    공통 라이브러리(라이브러리.updater.MonsterUpdater)를 연동하여 
+    0.5초 타임아웃 및 가벼운 requests 방식 버전 조회를 탑재하고,
+    기존 앱 고유의 자가 패칭 및 재시작 프로세스를 그대로 수행합니다.
     """
     
-    CURRENT_VERSION = config.CURRENT_VERSION # config에서 버전 정보를 가져옵니다.
-    PRODUCT_ID = config.PRODUCT_ID # config에서 제품명을 가져옵니다.
+    CURRENT_VERSION = config.CURRENT_VERSION
+    PRODUCT_ID = config.PRODUCT_ID
     
     @classmethod
     def check_for_updates(cls):
-        """서버에서 최신 버전을 확인합니다."""
-        client = SupabaseAuthManager._get_client()
-        if not client:
-            logger.error("업데이트 확인 실패: 서버 연결 불가")
-            return None
-
+        """[브릿지 구현] 공통 업데이터를 호출하여 최신 버전을 감지합니다."""
         try:
-            response = client.table("app_versions") \
-                .select("*") \
-                .eq("product_id", cls.PRODUCT_ID) \
-                .order("version", desc=True) \
-                .limit(1) \
-                .execute()
-
-            if response.data:
-                latest = response.data[0]
-                latest_version = latest['version']
+            logger.info("🔍 [라이브러리 검증] 최신 버전 확인 중...")
+            
+            update_info = CommonUpdater.check_for_updates(
+                product_id=cls.PRODUCT_ID,
+                current_version=cls.CURRENT_VERSION,
+                supabase_url=config.SUPABASE_URL,
+                supabase_key=config.SUPABASE_KEY
+            )
+            
+            if update_info:
+                logger.info(f"🚀 새 업데이트 발견: {cls.CURRENT_VERSION} -> {update_info['version']}")
+                return update_info
+            else:
+                logger.info("✅ 최신 버전을 사용 중입니다.")
+                return None
                 
-                if cls._is_newer(latest_version, cls.CURRENT_VERSION):
-                    logger.info(f"🚀 새 업데이트 발견: {cls.CURRENT_VERSION} -> {latest_version}")
-                    return latest
-            return None
         except Exception as e:
-            logger.error(f"업데이트 확인 중 오류: {e}")
+            logger.error(f"업데이트 확인 중 오류 발생: {e}")
             return None
-
-    @staticmethod
-    def _is_newer(latest, current):
-        """버전 문자열 비교 (예: 1.1.0 > 1.0.9)"""
-        try:
-            l_parts = [int(p) for p in latest.split('.')]
-            c_parts = [int(p) for p in current.split('.')]
-            return l_parts > c_parts
-        except:
-            return latest > current
 
     @classmethod
     def download_update(cls, download_url, target_filename="update_package.zip"):
-        """새 버전을 다운로드합니다."""
+        """[브릿지 구현] 공통 라이브러리 스트리밍 다운로드 연동"""
         try:
             logger.info(f"📥 업데이트 다운로드 시작: {download_url}")
-            response = requests.get(download_url, stream=True)
-            response.raise_for_status()
-            
-            with open(target_filename, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            logger.info(f"✅ 다운로드 완료: {target_filename}")
-            return True
+            success = CommonUpdater.download_to(download_url, target_filename)
+            if success:
+                logger.info(f"✅ 다운로드 완료: {target_filename}")
+                return True
+            return False
         except Exception as e:
             logger.error(f"다운로드 중 오류 발생: {e}")
             return False
@@ -78,7 +66,7 @@ class MonsterUpdater:
     def apply_update_and_restart(cls, update_package_path="update_package.zip"):
         """
         다운로드된 파일을 적용하고 앱을 재시작합니다.
-        실행 중인 EXE는 직접 교체가 안 되므로 배치 파일을 생성하여 처리합니다.
+        (기존의 자가 패칭 배치 파일 제어 메커니즘 유지)
         """
         try:
             current_exe = sys.executable
@@ -88,7 +76,6 @@ class MonsterUpdater:
             bat_path = os.path.join(app_dir, "monster_update_helper.bat")
             
             # 새 실행 파일 이름 (ZIP이 아니라 단일 파일 다운로드 가정 시)
-            # 만약 ZIP이라면 압축 해제 로직이 추가로 필요합니다.
             new_exe = os.path.join(app_dir, "Place-DB-Pro_new.exe")
             
             # ZIP 압축 해제 처리 (압축된 배포일 경우)
@@ -99,12 +86,7 @@ class MonsterUpdater:
                     zip_ref.extractall(app_dir)
                 os.remove(update_package_path)
             
-            # 배치 파일 내용 생성
-            # 1. 2초 대기 (프로세스 종료 대기)
-            # 2. 기존 파일 삭제
-            # 3. 새 파일이 있다면 이름 변경
-            # 4. 앱 재시작
-            # 5. 배치 파일 자가 삭제
+            # 배치 파일 내용 생성 (기존 로직 동일 유지)
             bat_content = f"""@echo off
 timeout /t 2 /nobreak > nul
 if exist "{current_exe}" del /f /q "{current_exe}"
