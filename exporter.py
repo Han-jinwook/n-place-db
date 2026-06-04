@@ -1,10 +1,10 @@
 import pandas as pd
 import sqlite3
 import os
-from datetime import datetime
 import config
+from 라이브러리.exporter import MonsterExporter
 
-def export_to_xlsx(db_path: str = None, output_dir: str = "exports"):
+def export_to_xlsx(db_path: str = None, prefix: str = "nplace.naver.com"):
     """
     Exports all data from the SQLite 'shops' table to an Excel file.
     Returns the path to the created file, or None if failed.
@@ -24,32 +24,31 @@ def export_to_xlsx(db_path: str = None, output_dir: str = "exports"):
         if df.empty:
             return None
 
-        # Prepare output
-        os.makedirs(output_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"crawled_shops_{timestamp}.xlsx"
-        file_path = os.path.join(output_dir, filename)
+        # Use Standard downloads path and naming format
+        file_path = MonsterExporter.get_export_filepath(prefix, "xlsx")
 
         # Drop internal columns if any
         if 'id' in df.columns:
             df = df.drop(columns=['id'])
 
         # Save to Excel
-        # Using utf-8-sig isn't needed for Excel (openpyxl handles it), 
-        # but we ensure column names are readable.
         df.columns = [
             "상호명", "전화번호", "상세URL", "주소", "위도", "경도", 
             "이메일", "인스타그램", "네이버블로그", "톡톡URL", "대표자명", "검색키워드", "수집일시"
         ]
         
         df.to_excel(file_path, index=False, engine='openpyxl')
+        
+        # Auto-open in explorer
+        MonsterExporter.open_in_explorer(file_path)
+        
         return os.path.abspath(file_path)
 
     except Exception as e:
         print(f"Excel Export Error: {e}")
         return None
 
-def export_to_csv(db_path: str = None, output_dir: str = "exports"):
+def export_to_csv(db_path: str = None, prefix: str = "nplace.naver.com"):
     """
     Exports all data to a CSV file with utf-8-sig encoding for Excel compatibility.
     """
@@ -67,10 +66,8 @@ def export_to_csv(db_path: str = None, output_dir: str = "exports"):
         if df.empty:
             return None
 
-        os.makedirs(output_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"crawled_shops_{timestamp}.csv"
-        file_path = os.path.join(output_dir, filename)
+        # Use Standard downloads path and naming format
+        file_path = MonsterExporter.get_export_filepath(prefix, "csv")
 
         if 'id' in df.columns:
             df = df.drop(columns=['id'])
@@ -80,8 +77,11 @@ def export_to_csv(db_path: str = None, output_dir: str = "exports"):
             "이메일", "인스타그램", "네이버블로그", "톡톡URL", "대표자명", "검색키워드", "수집일시"
         ]
         
-        # This is the key part the user requested
         df.to_csv(file_path, index=False, encoding='utf-8-sig')
+        
+        # Auto-open in explorer
+        MonsterExporter.open_in_explorer(file_path)
+        
         return os.path.abspath(file_path)
 
     except Exception as e:

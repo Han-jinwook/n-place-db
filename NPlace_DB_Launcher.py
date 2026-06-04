@@ -44,7 +44,7 @@ class MainApp(ctk.CTk):
 
         # [가이드 준수] Title & Branding
         self.title(f"[{config.BRAND_NAME_KR}] {config.SERVICE_NAME_KR} V1.0")
-        self.geometry("900x700")
+        self.geometry("900x700+40+40") # Main Window offset from top-left (approx 1cm)
         self.configure(fg_color=config.COLOR_DARK_BG)
         
         # UI Styles
@@ -494,8 +494,9 @@ class MainApp(ctk.CTk):
     def export_to_excel(self):
         self.log("📊 엑셀 내보내기 시작...")
         try:
+            keyword = self.entry_keyword.get().strip() or "nplace.naver.com"
             from exporter import export_to_xlsx
-            file_path = export_to_xlsx()
+            file_path = export_to_xlsx(prefix=keyword)
             if file_path:
                 messagebox.showinfo("완료", f"엑셀 파일이 저장되었습니다:\n{file_path}")
                 self.log(f"✅ 엑셀 저장 완료: {file_path}")

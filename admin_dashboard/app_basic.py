@@ -1186,7 +1186,7 @@ if page == 'Shop Search':
     with col_act3:
         if st.button("CSV💾", use_container_width=True, help="엑셀에서 한글이 깨질 경우 이 버튼을 사용하세요."):
             from exporter import export_to_csv
-            path = export_to_csv()
+            path = export_to_csv(prefix="nplace.naver.com")
             if path:
                 st.success("CSV 생성 완료")
                 with open(path, "rb") as f:

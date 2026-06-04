@@ -20,7 +20,15 @@ class AuthWindow(ctk.CTk):
 
         self.is_pro = is_pro
         self.title(f"[{config.BRAND_NAME_KR}] NPlace-DB 시작하기")
-        self.geometry("480x560")
+        
+        # Center the window (Initial Modal/Popup standard)
+        width = 480
+        height = 560
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width // 2) - (width // 2)
+        y = (screen_height // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
         self.resizable(False, False)
         
         # CI/BI Colors
