@@ -90,6 +90,17 @@ from sb_auth_manager import SupabaseAuthManager as AuthManager
 from crawler.local_db_handler import LocalDBHandler as DBHandler
 import base64
 
+# [Monster 공통 라이브러리] 표준 내보내기 모듈
+try:
+    import sys as _sys
+    _lib_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '라이브러리')
+    if _lib_path not in _sys.path:
+        _sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from 라이브러리.exporter import MonsterExporter
+    _EXPORTER_AVAILABLE = True
+except Exception as _e:
+    _EXPORTER_AVAILABLE = False
+
 # --- Security Utilities ---
 def get_crypto_key():
     return AuthManager.get_hwid()
@@ -1675,20 +1686,34 @@ if st.session_state['active_page'] == 'Shop Search':
     st.markdown("---")
     df_search = load_local_data()
     if not df_search.empty:
-        # [NEW] Table Header & Download Button at Top-Right
+        # 테이블 헤더 & CSV 내보내기 버튼
         t_col1, t_col2 = st.columns([3, 1])
         with t_col1:
             st.markdown('<h3 style="margin:0; padding-top:10px; color:#1E293B;">📊 실시간 수집 데이터 현황</h3>', unsafe_allow_html=True)
         with t_col2:
-            csv_data = df_search.to_csv(index=False).encode('utf-8-sig')
-            st.download_button(
-                label="📥 엑셀(CSV) 다운로드",
-                data=csv_data,
-                file_name=f"NPlace_DB_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv",
-                use_container_width=True,
-                key="top_dl_btn"
-            )
+            if st.button("📥 엑셀(CSV) 내보내기 및 폴더 열기", use_container_width=True, key="top_export_btn", type="primary"):
+                if _EXPORTER_AVAILABLE:
+                    try:
+                        import sqlite3 as _sqlite3
+                        import pandas as _pd
+                        conn_ex = _sqlite3.connect(config.LOCAL_DB_PATH)
+                        df_ex = _pd.read_sql_query("SELECT * FROM shops", conn_ex)
+                        conn_ex.close()
+                        if not df_ex.empty:
+                            file_path = MonsterExporter.get_export_filepath("nplace.naver.com", "csv")
+                            # 불필요 컬럼 제거 후 한글 헤더 적용
+                            drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
+                            df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
+                            df_ex.to_csv(file_path, index=False, encoding='utf-8-sig')
+                            MonsterExporter.open_in_explorer(file_path)
+                            st.toast(f"✅ 저장 완료! 탐색기에서 파일을 확인하세요.")
+                        else:
+                            st.warning("내보낼 데이터가 없습니다.")
+                    except Exception as _ex_err:
+                        st.error(f"내보내기 실패: {_ex_err}")
+                else:
+                    # Fallback: 브라우저 다운로드
+                    st.warning("내보내기 모듈을 불러오지 못했습니다. 관리자에게 문의해 주세요.")
         
         st.dataframe(df_search[['No', '상호명', '주소', '번호', '이메일', '인스타']], hide_index=True, use_container_width=True, height=600)
     else: 

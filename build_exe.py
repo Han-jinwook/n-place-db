@@ -49,6 +49,7 @@ def build():
         '--add-data=updater.py;.',
         '--add-data=exporter.py;.',
         '--add-data=main_launcher.py;.',
+        '--add-data=라이브러리;라이브러리',
         '--collect-all=playwright_stealth',
         '--collect-all=streamlit_autorefresh',
         '--hidden-import=step1_refined_crawler',
