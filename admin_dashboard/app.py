@@ -1700,13 +1700,18 @@ if st.session_state['active_page'] == 'Shop Search':
                         df_ex = _pd.read_sql_query("SELECT * FROM shops", conn_ex)
                         conn_ex.close()
                         if not df_ex.empty:
-                            # [키워드 파일명] 세션 키워드 → DB 컬럼 → fallback 순으로 추출
+                            # [v1.2] 3단계 파일명 전략:
+                            # 1순위: 세션의 사용자 검색 키워드 (예: 설렁탕집)
+                            # 2순위: APP_DEFAULT_PREFIX 테이블의 'nplace-db' 기본값 (N플레이스)
+                            # 3순위: fallback (Monster_export)
                             _kw = st.session_state.get('monster_db_kw_input_v7', '').strip()
                             if not _kw and 'search_keyword' in df_ex.columns:
                                 _kw = df_ex['search_keyword'].dropna().iloc[-1] if not df_ex['search_keyword'].dropna().empty else ''
-                            if not _kw:
-                                _kw = 'N플레이스'
-                            file_path = MonsterExporter.get_export_filepath(_kw, "csv")
+                            file_path = MonsterExporter.get_export_filepath(
+                                custom_prefix=_kw if _kw else None,
+                                extension="csv",
+                                product_id="nplace-db"  # fallback: APP_DEFAULT_PREFIX → 'N플레이스'
+                            )
                             # 불필요 컬럼 제거 후 한글 헤더 적용
                             drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
                             df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
