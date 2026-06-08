@@ -1485,6 +1485,37 @@ if st.session_state['active_page'] == 'Shop Search':
             
             # File Info
             st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'><b>경로:</b> {db_path}</div>", unsafe_allow_html=True)
+            
+            # [NEW] Downloads Folder & DB Directory Opener Button (Monster UI/UX Rule)
+            c_dir1, c_dir2 = st.columns(2)
+            with c_dir1:
+                if st.button("📁 DB 저장폴더 열기", use_container_width=True, key="open_db_dir_btn"):
+                    try:
+                        dir_path = os.path.dirname(os.path.abspath(db_path))
+                        if sys.platform == "win32":
+                            os.startfile(dir_path)
+                        elif sys.platform == "darwin":
+                            subprocess.Popen(["open", dir_path])
+                        else:
+                            subprocess.Popen(["xdg-open", dir_path])
+                        st.toast("📂 DB 저장폴더를 열었습니다.")
+                    except Exception as e:
+                        st.error(f"폴더 열기 실패: {e}")
+            with c_dir2:
+                if st.button("📥 다운로드 폴더 열기", use_container_width=True, key="open_download_dir_btn"):
+                    try:
+                        # Standard Windows/Mac/Linux download path
+                        download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+                        if sys.platform == "win32":
+                            os.startfile(download_path)
+                        elif sys.platform == "darwin":
+                            subprocess.Popen(["open", download_path])
+                        else:
+                            subprocess.Popen(["xdg-open", download_path])
+                        st.toast("📂 다운로드 폴더를 열었습니다.")
+                    except Exception as e:
+                        st.error(f"다운로드 폴더 열기 실패: {e}")
+
             if exists:
                 size_mb = os.path.getsize(db_path) / (1024 * 1024)
                 mtime = datetime.fromtimestamp(os.path.getmtime(db_path)).strftime('%Y-%m-%d %H:%M')
@@ -1495,23 +1526,23 @@ if st.session_state['active_page'] == 'Shop Search':
             st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
             
             # Stats
-            db_count = len(df) if not df.empty else 0
+            db_count = len(df_search) if not df_search.empty else 0
             sc1, sc2 = st.columns(2)
             with sc1:
                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>총 업체수</p><h3 style='margin:0;'>{db_count}</h3></div>", unsafe_allow_html=True)
             with sc2:
                 # Last saved time from DB if possible
                 last_time = "-"
-                if not df.empty and 'updated_at' in df.columns:
-                     try: last_time = pd.to_datetime(df['updated_at']).max().strftime('%H:%M')
+                if not df_search.empty and 'updated_at' in df_search.columns:
+                     try: last_time = pd.to_datetime(df_search['updated_at']).max().strftime('%H:%M')
                      except: pass
-                st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 저장</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
-
-            if st.button("🧹 DB 초기화 (전체 삭제)", use_container_width=True, key="reset_db_btn"):
-                if exists:
-                    # 1. Backup & Remove DB
-                    backup_path = db_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    os.rename(db_path, backup_path)
+                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 저장</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
+ 
+             if st.button("🧹 DB 초기화 (전체 삭제)", use_container_width=True, key="reset_db_btn"):
+                 if exists:
+                     # 1. Backup & Remove DB
+                     backup_path = db_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                     os.rename(db_path, backup_path)
                     
                     # 2. Reset Progress Info (Using Config Path)
                     if os.path.exists(config.PROGRESS_FILE):
@@ -1642,13 +1673,14 @@ if st.session_state['active_page'] == 'Shop Search':
         st_autorefresh(interval=5000, limit=None, key="engine_autorefresh_global_v1")
 
     st.markdown("---")
-    if not df.empty:
+    df_search = load_local_data()
+    if not df_search.empty:
         # [NEW] Table Header & Download Button at Top-Right
         t_col1, t_col2 = st.columns([3, 1])
         with t_col1:
             st.markdown('<h3 style="margin:0; padding-top:10px; color:#1E293B;">📊 실시간 수집 데이터 현황</h3>', unsafe_allow_html=True)
         with t_col2:
-            csv_data = df.to_csv(index=False).encode('utf-8-sig')
+            csv_data = df_search.to_csv(index=False).encode('utf-8-sig')
             st.download_button(
                 label="📥 엑셀(CSV) 다운로드",
                 data=csv_data,
@@ -1658,12 +1690,16 @@ if st.session_state['active_page'] == 'Shop Search':
                 key="top_dl_btn"
             )
         
-        st.dataframe(df[['No', '상호명', '주소', '번호', '이메일', '인스타']], hide_index=True, use_container_width=True, height=600)
+        st.dataframe(df_search[['No', '상호명', '주소', '번호', '이메일', '인스타']], hide_index=True, use_container_width=True, height=600)
     else: 
         st.info("데이터가 없습니다.")
 
-elif st.session_state['active_page'] == 'Track A': render_track('A', '이메일 마케팅', '이메일', '메일 서버', df)
-elif st.session_state['active_page'] == 'Track C': render_track('C', '인스타 DM 마케팅', '인스타', 'DM 서버', df)
+elif st.session_state['active_page'] == 'Track A':
+    df_track_a = load_local_data()
+    render_track('A', '이메일 마케팅', '이메일', '메일 서버', df_track_a)
+elif st.session_state['active_page'] == 'Track C':
+    df_track_c = load_local_data()
+    render_track('C', '인스타 DM 마케팅', '인스타', 'DM 서버', df_track_c)
 elif st.session_state['active_page'] == 'Guide':
     st.markdown('<div class="section-title">📖 NPlace-DB 공식 가이드</div>', unsafe_allow_html=True)
     
