@@ -954,6 +954,38 @@ async def run_crawler(target_area=None, target_count=10, resume=False, custom_ke
             print(f"PROGRESS_JSON: {json.dumps(prog_data, ensure_ascii=False)}", flush=True)
         except: pass
 
+        # [AUTO CSV EXPORT] 수집 완료 시 CSV 자동 저장 (MonsterExporter v1.2)
+        # 사용자가 "아차!" 없이 언제든 Downloads 폴더에서 파일을 찾을 수 있도록
+        try:
+            import sys as _sys
+            _lib_dir = os.path.dirname(os.path.abspath(__file__))
+            if _lib_dir not in _sys.path:
+                _sys.path.insert(0, _lib_dir)
+            from 라이브러리.exporter import MonsterExporter
+            import sqlite3 as _sqlite3
+            import pandas as _pd
+
+            conn_auto = _sqlite3.connect(config.LOCAL_DB_PATH)
+            df_auto = _pd.read_sql_query("SELECT * FROM shops", conn_auto)
+            conn_auto.close()
+
+            if not df_auto.empty:
+                # 파일명 키워드: shop_type(검색어) 우선, 없으면 'N플레이스'
+                _kw = (shop_type or "").strip() if shop_type else ""
+                auto_path = MonsterExporter.get_export_filepath(
+                    custom_prefix=_kw if _kw else None,
+                    extension="csv",
+                    product_id="nplace-db"
+                )
+                drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
+                df_auto = df_auto.drop(columns=[c for c in drop_cols if c in df_auto.columns], errors='ignore')
+                df_auto.to_csv(auto_path, index=False, encoding='utf-8-sig')
+                logger.info(f"📁 [AUTO EXPORT] CSV 자동 저장 완료: {auto_path}")
+                print(f"📁 AUTO_EXPORT: {auto_path}", flush=True)
+        except Exception as _auto_e:
+            logger.warning(f"⚠️ Auto CSV export failed (non-critical): {_auto_e}")
+
+
     except BaseException as e:
         logger.error(f"FATAL ERROR in run_crawler session (BaseException): {type(e).__name__} - {e}")
         print(f"FATAL ERROR: {type(e).__name__} - {e}", flush=True)
