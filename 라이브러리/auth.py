@@ -9,7 +9,7 @@ import subprocess
 import hashlib
 import uuid
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 class MonsterAuth:
     """
@@ -108,7 +108,8 @@ class MonsterAuth:
                     return False, "이미 다른 PC에 등록된 라이선스 키입니다. (1PC 1Key 원칙)", 0
             else:
                 # 바인딩되지 않은 키(unused)인 경우 현재 HWID를 강제 등록하고 활성화(active) 처리
-                success = self._bind_device()
+                license_type = license_info.get("license_type", "")
+                success = self._bind_device(license_type=license_type)
                 if not success:
                     return False, "기기 바인딩 등록 중 오류가 발생했습니다.", 0
 
@@ -119,13 +120,30 @@ class MonsterAuth:
         except Exception as e:
             return False, f"서버 통신 오류가 발생했습니다: {str(e)}", 0
 
-    def _bind_device(self):
-        """현재 HWID를 Supabase에 영구 바인딩합니다."""
+    def _bind_device(self, license_type: str = ""):
+        """현재 HWID를 Supabase에 영구 바인딩합니다. 첫 실행일 기준으로 만료일도 재계산합니다."""
         url = f"{self.supabase_url.rstrip('/')}/rest/v1/licenses?serial_key=eq.{self.license_key}"
+
+        # license_type 별 만료 기간 (일 단위)
+        DURATION_MAP = {
+            "TRIAL":    5,
+            "1M":       30,
+            "3M":       90,
+            "6M":       180,
+            "LIFETIME": None,  # None = 만료 없음
+        }
+        now_utc = datetime.now(timezone.utc)
+        days = DURATION_MAP.get(license_type)
+        new_expire = (now_utc + timedelta(days=days)).isoformat() if days is not None else None
+
         payload = {
             "bound_value": self.hwid,
-            "status": "active"
+            "status": "active",
+            "first_run_date": now_utc.isoformat(),
         }
+        if new_expire is not None:
+            payload["expire_date"] = new_expire
+
         try:
             res = requests.patch(url, headers=self._get_headers(), json=payload, timeout=self.timeout)
             return res.status_code in [200, 201, 204]
