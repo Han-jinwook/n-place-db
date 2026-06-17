@@ -11,11 +11,11 @@ def build():
     # 1. Resilient Cleanup
     try:
         if os.path.exists("build"): shutil.rmtree("build", ignore_errors=True)
-        # Clean up previous versions in dist
-        if os.path.exists("dist"):
-            for d in os.listdir("dist"):
-                if d.startswith("NPlace-DB"):
-                    shutil.rmtree(os.path.join("dist", d), ignore_errors=True)
+        # Clean up previous versions in dist (Disabled by request: "앞에 폴더 지우지 말고")
+        # if os.path.exists("dist"):
+        #     for d in os.listdir("dist"):
+        #         if d.startswith("NPlace-DB"):
+        #             shutil.rmtree(os.path.join("dist", d), ignore_errors=True)
                     
         print("Cleanup done (including pycache).")
     except Exception as e:
