@@ -19,24 +19,27 @@ if getattr(sys, 'frozen', False):
 else:
     LOCAL_BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# [NEW] Persistent User Settings Path (Standard Windows App Behavior)
-if sys.platform == "win32":
-    USER_DATA_PATH = os.path.join(os.getenv('APPDATA', LOCAL_BASE_PATH), "NPlace-DB")
-else:
-    USER_DATA_PATH = os.path.join(os.path.expanduser("~"), ".nplace_db")
+# [NEW] Persistent User Settings Path (Zero-maintenance Data Policy)
+USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
+
+# Centralized Persistent Paths
+ARCHIVE_DB_PATH = os.path.join(USER_DATA_PATH, "DB")
+LOCAL_LOG_PATH = os.path.join(USER_DATA_PATH, "Logs")
 
 # Ensure persistent directories exist
 os.makedirs(USER_DATA_PATH, exist_ok=True)
-os.makedirs(os.path.join(USER_DATA_PATH, "log"), exist_ok=True)
+os.makedirs(ARCHIVE_DB_PATH, exist_ok=True)
+os.makedirs(LOCAL_LOG_PATH, exist_ok=True)
 
-# Centralized Persistent Paths
+# Active session files (These will be archived on next run)
 LOCAL_DB_PATH = os.path.join(USER_DATA_PATH, "database.sqlite")
-LOCAL_LOG_PATH = os.path.join(USER_DATA_PATH, "log")
 PROGRESS_FILE = os.path.join(LOCAL_LOG_PATH, "progress.json")
-ENGINE_LOG_FILE = os.path.join(USER_DATA_PATH, "app.log")
+ENGINE_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "app.log")
+INSTA_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "instagram_dm.log")
+
+# Settings files
 LOCAL_TEMPLATE_FILE = os.path.join(USER_DATA_PATH, "templates.json")
 SETTINGS_FILE = os.path.join(USER_DATA_PATH, "user_settings.json")
-INSTA_LOG_FILE = os.path.join(USER_DATA_PATH, "instagram_dm.log")
 
 # [NEW] Automatic Data Migration (Rule 3.3: Portable -> Persistent)
 # Migration should only happen ONCE to prevent old data from reappearing after a reset

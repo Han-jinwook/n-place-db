@@ -1470,6 +1470,19 @@ if st.session_state['active_page'] == 'Shop Search':
                             new_hist.append(s_keyword)
                             new_hist = new_hist[-10:]
                         
+                        # [NEW] Auto-Archiving logic: Save old session into DB/ before starting new one
+                        db_path = config.LOCAL_DB_PATH
+                        if os.path.exists(db_path):
+                            try:
+                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                                archive_db = os.path.join(config.ARCHIVE_DB_PATH, f"db_{timestamp}.sqlite")
+                                os.rename(db_path, archive_db)
+                                # Also clear progress
+                                if os.path.exists(config.PROGRESS_FILE): os.remove(config.PROGRESS_FILE)
+                                if os.path.exists(config.ENGINE_LOG_FILE): os.remove(config.ENGINE_LOG_FILE)
+                            except Exception as e:
+                                st.warning(f"히스토리 백업 중 오류: {e}")
+                                
                         st.session_state['engine_starting'] = True
                         save_settings({
                             'keyword': s_keyword, 'exclude': s_exclude, 'filter_mode_ui': s_f_mode_ui,
@@ -1489,88 +1502,69 @@ if st.session_state['active_page'] == 'Shop Search':
 
     with c3:
         with st.container(border=True):
-            st.markdown('<p class="input-label">🗄️ 데이터/DB 관리</p>', unsafe_allow_html=True)
+            st.markdown('<p class="input-label">🗄️ 데이터 관리</p>', unsafe_allow_html=True)
             
             db_path = config.LOCAL_DB_PATH
             exists = os.path.exists(db_path)
             
             # File Info
-            st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'><b>경로:</b> {db_path}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'><b>저장 경로:</b> {config.USER_DATA_PATH}</div>", unsafe_allow_html=True)
             
-            # [NEW] Downloads Folder & DB Directory Opener Button (Monster UI/UX Rule)
-            c_dir1, c_dir2 = st.columns(2)
-            with c_dir1:
-                if st.button("📁 DB 저장폴더 열기", use_container_width=True, key="open_db_dir_btn"):
-                    try:
-                        dir_path = os.path.dirname(os.path.abspath(db_path))
-                        if sys.platform == "win32":
-                            os.startfile(dir_path)
-                        elif sys.platform == "darwin":
-                            subprocess.Popen(["open", dir_path])
-                        else:
-                            subprocess.Popen(["xdg-open", dir_path])
-                        st.toast("📂 DB 저장폴더를 열었습니다.")
-                    except Exception as e:
-                        st.error(f"폴더 열기 실패: {e}")
-            with c_dir2:
-                if st.button("📥 다운로드 폴더 열기", use_container_width=True, key="open_download_dir_btn"):
-                    try:
-                        # Standard Windows/Mac/Linux download path
-                        download_path = os.path.join(os.path.expanduser("~"), "Downloads")
-                        if sys.platform == "win32":
-                            os.startfile(download_path)
-                        elif sys.platform == "darwin":
-                            subprocess.Popen(["open", download_path])
-                        else:
-                            subprocess.Popen(["xdg-open", download_path])
-                        st.toast("📂 다운로드 폴더를 열었습니다.")
-                    except Exception as e:
-                        st.error(f"다운로드 폴더 열기 실패: {e}")
+            # [NEW] Single Trigger Button for CSV Export & Folder Open
+            if st.button("📁 작업 폴더 열기 (엑셀 변환)", use_container_width=True, key="open_workspace_btn", type="primary"):
+                try:
+                    if exists and _EXPORTER_AVAILABLE:
+                        import sqlite3 as _sqlite3
+                        import pandas as _pd
+                        conn_ex = _sqlite3.connect(db_path)
+                        df_ex = _pd.read_sql_query("SELECT * FROM shops", conn_ex)
+                        conn_ex.close()
+                        if not df_ex.empty:
+                            _kw = st.session_state.get('monster_db_kw_input_v7', '').strip()
+                            if not _kw and 'search_keyword' in df_ex.columns:
+                                _kw = df_ex['search_keyword'].dropna().iloc[-1] if not df_ex['search_keyword'].dropna().empty else ''
+                            file_path = MonsterExporter.get_export_filepath(
+                                custom_prefix=_kw if _kw else None,
+                                extension="csv",
+                                product_id="nplace-db",
+                                base_dir=config.USER_DATA_PATH
+                            )
+                            drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
+                            df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
+                            df_ex.to_csv(file_path, index=False, encoding='utf-8-sig')
+                            st.toast("✅ 최신 결과가 엑셀(CSV)로 변환되었습니다.")
+                    
+                    # Open the root USER_DATA_PATH
+                    if sys.platform == "win32":
+                        os.startfile(config.USER_DATA_PATH)
+                    elif sys.platform == "darwin":
+                        subprocess.Popen(["open", config.USER_DATA_PATH])
+                    else:
+                        subprocess.Popen(["xdg-open", config.USER_DATA_PATH])
+                except Exception as e:
+                    st.error(f"작업 폴더 열기 실패: {e}")
 
             if exists:
                 size_mb = os.path.getsize(db_path) / (1024 * 1024)
                 mtime = datetime.fromtimestamp(os.path.getmtime(db_path)).strftime('%Y-%m-%d %H:%M')
-                st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'>파일: 존재함 · 크기: {size_mb:.2f}MB · 수정: {mtime}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'>상태: {size_mb:.2f}MB · {mtime} 갱신됨</div>", unsafe_allow_html=True)
             else:
-                st.markdown("<div style='font-size:0.75rem; color:#EF4444;'>파일: 없음 (수집 시 자동 생성)</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size:0.75rem; color:#EF4444;'>현재 세션 데이터 없음</div>", unsafe_allow_html=True)
             
             st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
             
             # Stats
+            df_search = load_local_data()
             db_count = len(df_search) if not df_search.empty else 0
             sc1, sc2 = st.columns(2)
             with sc1:
                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>총 업체수</p><h3 style='margin:0;'>{db_count}</h3></div>", unsafe_allow_html=True)
             with sc2:
-                # Last saved time from DB if possible
                 last_time = "-"
                 if not df_search.empty and 'updated_at' in df_search.columns:
                     try: last_time = pd.to_datetime(df_search['updated_at']).max().strftime('%H:%M')
                     except: pass
-                st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 저장</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
-
-            if st.button("🧹 DB 초기화 (전체 삭제)", use_container_width=True, key="reset_db_btn"):
-                if exists:
-                    # 1. Backup & Remove DB
-                    backup_path = db_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                    os.rename(db_path, backup_path)
-                    
-                    # 2. Reset Progress Info (Using Config Path)
-                    if os.path.exists(config.PROGRESS_FILE):
-                        try: os.remove(config.PROGRESS_FILE)
-                        except: pass
-                    
-                    # 3. Clear Engine Logs (Using Config Path)
-                    if os.path.exists(config.ENGINE_LOG_FILE):
-                        try:
-                            with open(config.ENGINE_LOG_FILE, "w", encoding="utf-8") as f: f.write("")
-                        except: pass
-                        
-                    st.success("데이터 및 현황이 초기화되었습니다. (전체 리셋 완료)")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.info("초기화할 DB 파일이 없습니다.")
+                st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 수집</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
     # --- 2. Live Monitoring Section ---
     st.markdown('<div class="section-title" style="margin-top:1rem;">📊 실시간 수집 상세 현황</div>', unsafe_allow_html=True)
     prog = get_crawler_progress() or {}
@@ -1687,44 +1681,7 @@ if st.session_state['active_page'] == 'Shop Search':
     df_search = load_local_data()
     if not df_search.empty:
         # 테이블 헤더 & CSV 내보내기 버튼
-        t_col1, t_col2 = st.columns([3, 1])
-        with t_col1:
-            st.markdown('<h3 style="margin:0; padding-top:10px; color:#1E293B;">📊 실시간 수집 데이터 현황</h3>', unsafe_allow_html=True)
-        with t_col2:
-            if st.button("📥 엑셀(CSV) 내보내기 및 폴더 열기", use_container_width=True, key="top_export_btn", type="primary"):
-                if _EXPORTER_AVAILABLE:
-                    try:
-                        import sqlite3 as _sqlite3
-                        import pandas as _pd
-                        conn_ex = _sqlite3.connect(config.LOCAL_DB_PATH)
-                        df_ex = _pd.read_sql_query("SELECT * FROM shops", conn_ex)
-                        conn_ex.close()
-                        if not df_ex.empty:
-                            # [v1.2] 3단계 파일명 전략:
-                            # 1순위: 세션의 사용자 검색 키워드 (예: 설렁탕집)
-                            # 2순위: APP_DEFAULT_PREFIX 테이블의 'nplace-db' 기본값 (N플레이스)
-                            # 3순위: fallback (Monster_export)
-                            _kw = st.session_state.get('monster_db_kw_input_v7', '').strip()
-                            if not _kw and 'search_keyword' in df_ex.columns:
-                                _kw = df_ex['search_keyword'].dropna().iloc[-1] if not df_ex['search_keyword'].dropna().empty else ''
-                            file_path = MonsterExporter.get_export_filepath(
-                                custom_prefix=_kw if _kw else None,
-                                extension="csv",
-                                product_id="nplace-db"  # fallback: APP_DEFAULT_PREFIX → 'N플레이스'
-                            )
-                            # 불필요 컬럼 제거 후 한글 헤더 적용
-                            drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
-                            df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
-                            df_ex.to_csv(file_path, index=False, encoding='utf-8-sig')
-                            MonsterExporter.open_in_explorer(file_path)
-                            st.toast(f"✅ 저장 완료! 탐색기에서 파일을 확인하세요.")
-                        else:
-                            st.warning("내보낼 데이터가 없습니다.")
-                    except Exception as _ex_err:
-                        st.error(f"내보내기 실패: {_ex_err}")
-                else:
-                    # Fallback: 브라우저 다운로드
-                    st.warning("내보내기 모듈을 불러오지 못했습니다. 관리자에게 문의해 주세요.")
+        st.markdown('<h3 style="margin:0; padding-top:10px; color:#1E293B;">📊 실시간 수집 데이터 현황</h3>', unsafe_allow_html=True)
         
         st.dataframe(df_search[['No', '상호명', '주소', '번호', '이메일', '인스타']], hide_index=True, use_container_width=True, height=600)
     else: 
