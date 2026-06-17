@@ -1545,15 +1545,15 @@ if st.session_state['active_page'] == 'Shop Search':
                 # Last saved time from DB if possible
                 last_time = "-"
                 if not df_search.empty and 'updated_at' in df_search.columns:
-                     try: last_time = pd.to_datetime(df_search['updated_at']).max().strftime('%H:%M')
-                     except: pass
-                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 저장</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
- 
-             if st.button("🧹 DB 초기화 (전체 삭제)", use_container_width=True, key="reset_db_btn"):
-                 if exists:
-                     # 1. Backup & Remove DB
-                     backup_path = db_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                     os.rename(db_path, backup_path)
+                    try: last_time = pd.to_datetime(df_search['updated_at']).max().strftime('%H:%M')
+                    except: pass
+                st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 저장</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
+
+            if st.button("🧹 DB 초기화 (전체 삭제)", use_container_width=True, key="reset_db_btn"):
+                if exists:
+                    # 1. Backup & Remove DB
+                    backup_path = db_path + f".bak_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    os.rename(db_path, backup_path)
                     
                     # 2. Reset Progress Info (Using Config Path)
                     if os.path.exists(config.PROGRESS_FILE):
