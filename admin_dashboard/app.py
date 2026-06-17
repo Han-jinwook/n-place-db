@@ -1615,7 +1615,14 @@ if st.session_state['active_page'] == 'Shop Search':
     sc1, sc2, sc3, sc4 = st.columns(4, gap="small")
     with sc1:
         total_val = prog.get("success_count", 0) if is_completed else prog.get("estimated_total", 0)
-        total_disp = f"{total_val} <span style='font-size:0.8rem; color:#94A3B8;'>건</span>" if total_val > 0 else "<span style='font-size:1.2rem;'>계산 중...</span>"
+        if total_val > 0:
+            total_disp = f"{total_val} <span style='font-size:0.8rem; color:#94A3B8;'>건</span>"
+        elif is_completed:
+            total_disp = "0 <span style='font-size:0.8rem; color:#94A3B8;'>건</span>"
+        elif pid is not None:
+            total_disp = "<span style='font-size:1.2rem;'>계산 중...</span>"
+        else:
+            total_disp = "<span style='font-size:1.2rem; color:#94A3B8;'>-</span>"
         st.markdown(f'<div class="section-container" style="text-align:center; padding:1rem; border-top: 4px solid #E2E8F0;"><p class="input-label">최종 수집 대상 수</p><h3 style="margin:0;">{total_disp}</h3></div>' if is_completed else f'<div class="section-container" style="text-align:center; padding:1rem; border-top: 4px solid #E2E8F0;"><p class="input-label">예상 대상 수 (추정)</p><h3 style="margin:0;">{total_disp}</h3></div>', unsafe_allow_html=True)
     with sc2:
         st.markdown(f'<div class="section-container" style="text-align:center; padding:1rem; border-top: 4px solid #00E676;"><p class="input-label" style="color:#00E676;">현재 수집 개수</p><h3 style="margin:0; color:#00E676;">{prog.get("success_count", 0)} <span style="font-size:0.8rem; color:#94A3B8;">건</span></h3></div>', unsafe_allow_html=True)
