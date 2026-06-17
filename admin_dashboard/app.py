@@ -1508,7 +1508,7 @@ if st.session_state['active_page'] == 'Shop Search':
             exists = os.path.exists(db_path)
             
             # File Info
-            st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'><b>저장 경로:</b> {config.USER_DATA_PATH}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size:0.75rem; color:#64748B; word-break:break-all; line-height:1.3; margin-bottom:12px;'><b>저장 경로:</b> {config.USER_DATA_PATH}</div>", unsafe_allow_html=True)
             
             # [NEW] Single Trigger Button for CSV Export & Folder Open
             if st.button("📁 작업 폴더 열기 (엑셀 변환)", use_container_width=True, key="open_workspace_btn", type="primary"):
@@ -1547,9 +1547,9 @@ if st.session_state['active_page'] == 'Shop Search':
             if exists:
                 size_mb = os.path.getsize(db_path) / (1024 * 1024)
                 mtime = datetime.fromtimestamp(os.path.getmtime(db_path)).strftime('%Y-%m-%d %H:%M')
-                st.markdown(f"<div style='font-size:0.75rem; color:#64748B;'>상태: {size_mb:.2f}MB · {mtime} 갱신됨</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:0.75rem; color:#64748B; margin-top:8px;'>상태: {size_mb:.2f}MB · {mtime} 갱신됨</div>", unsafe_allow_html=True)
             else:
-                st.markdown("<div style='font-size:0.75rem; color:#EF4444;'>현재 세션 데이터 없음</div>", unsafe_allow_html=True)
+                st.markdown("<div style='font-size:0.75rem; color:#EF4444; margin-top:8px;'>현재 세션 데이터 없음</div>", unsafe_allow_html=True)
             
             st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
             
