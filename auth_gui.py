@@ -46,24 +46,27 @@ class AuthWindow(ctk.CTk):
         self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.header_frame.pack(pady=(30, 10), padx=30, fill="x")
 
+        self.title_container = ctk.CTkFrame(self.header_frame, fg_color="transparent")
+        self.title_container.pack(anchor="center")
+
         logo_path = os.path.join(os.path.dirname(__file__), 'assets', 'MarketingMonster_logo.png')
         if os.path.exists(logo_path):
             try:
                 img = Image.open(logo_path)
-                self.logo_image = ctk.CTkImage(light_image=img, dark_image=img, size=(80, 80))
-                self.logo_label = ctk.CTkLabel(self.header_frame, image=self.logo_image, text="")
-                self.logo_label.pack(pady=(0, 5))
+                self.logo_image = ctk.CTkImage(light_image=img, dark_image=img, size=(60, 60))
+                self.logo_label = ctk.CTkLabel(self.title_container, image=self.logo_image, text="")
+                self.logo_label.pack(side="left", padx=(0, 15))
             except Exception as e:
                 logger.error(f"Logo load error: {e}")
 
-        self.label_title = ctk.CTkLabel(self.header_frame, text="NPlace-DB", 
+        self.label_title = ctk.CTkLabel(self.title_container, text="NPlace-DB", 
                                         font=("Arial", 36, "bold"), text_color="#A855F7")
-        self.label_title.pack()
+        self.label_title.pack(side="left")
 
         # 2. Main Container (Stage-based)
         self.main_card = ctk.CTkFrame(self, fg_color=self.card_navy, corner_radius=24, 
                                       border_width=1, border_color="#2D3748")
-        self.main_card.pack(pady=(10, 0), padx=35, fill="both", expand=True)
+        self.main_card.pack(pady=(10, 25), padx=35, fill="both", expand=True)
 
         self.hwid = AuthManager.get_hwid()
         self.authenticated = False
@@ -102,7 +105,7 @@ class AuthWindow(ctk.CTk):
                                           font=("Arial", 20, "bold"), text_color="#A855F7")
         self.lbl_auth_title.pack(pady=(20, 10))
 
-        self.entry_key = ctk.CTkEntry(self.auth_stage, placeholder_text="CM-XXXX-XXXX-XXXX", 
+        self.entry_key = ctk.CTkEntry(self.auth_stage, placeholder_text="CM-XXXX / DLX-XXXX", 
                                      height=58, font=("Arial", 18, "bold"), justify="center",
                                      fg_color="#0F172A", border_color="#334155",
                                      text_color=self.text_white, corner_radius=16)
