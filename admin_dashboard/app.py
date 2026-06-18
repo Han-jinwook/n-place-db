@@ -1524,8 +1524,26 @@ if st.session_state['active_page'] == 'Shop Search':
                             _kw = st.session_state.get('monster_db_kw_input_v7', '').strip()
                             if not _kw and 'search_keyword' in df_ex.columns:
                                 _kw = df_ex['search_keyword'].dropna().iloc[-1] if not df_ex['search_keyword'].dropna().empty else ''
+                            
+                            # Construct target area representation for meaningful naming
+                            _provs = st.session_state.get("main_prov_v5", [])
+                            _dists = st.session_state.get("main_dist_v5", [])
+                            _targets = []
+                            _dist_provs = set()
+                            for sd in _dists:
+                                p_name = sd.split("]")[0][1:]
+                                d_name = sd.split("]")[1].strip()
+                                _targets.append(f"{p_name} {d_name}")
+                                _dist_provs.add(p_name)
+                            for p in _provs:
+                                if p not in _dist_provs:
+                                    _targets.append(p)
+                            _target_str = ",".join(_targets)
+                            
+                            _prefix = f"{_target_str}_{_kw}" if (_target_str and _kw) else (_target_str or _kw or "N플레이스")
+                            
                             file_path = MonsterExporter.get_export_filepath(
-                                custom_prefix=_kw if _kw else None,
+                                custom_prefix=_prefix,
                                 extension="csv",
                                 product_id="nplace-db"
                             )

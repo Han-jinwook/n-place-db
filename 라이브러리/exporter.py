@@ -66,8 +66,6 @@ class MonsterExporter:
           1. 인자로 전달된 prefix (None이 아닌 경우 최우선)
           2. 빈 문자열이면 'Monster_export' fallback 적용
         """
-        timestamp = datetime.datetime.now().strftime("%m%d_%H%M")
-
         # 빈값 fallback
         safe_prefix = (prefix or "Monster_export").strip()
 
@@ -78,7 +76,7 @@ class MonsterExporter:
         # 확장자 앞자리 점(.) 제거 대응
         clean_ext = extension.lstrip('.')
 
-        return f"{safe_prefix}_{timestamp}.{clean_ext}"
+        return f"{safe_prefix}.{clean_ext}"
 
     @classmethod
     def get_export_filepath(cls, custom_prefix=None, extension="xlsx",

@@ -970,10 +970,12 @@ async def run_crawler(target_area=None, target_count=10, resume=False, custom_ke
             conn_auto.close()
 
             if not df_auto.empty:
-                # 파일명 키워드: shop_type(검색어) 우선, 없으면 'N플레이스'
+                # 파일명 키워드: [지역]_[검색어]
                 _kw = (shop_type or "").strip() if shop_type else ""
+                _area = (target or "").strip() if target else ""
+                _prefix = f"{_area}_{_kw}" if (_area and _kw) else (_area or _kw or "N플레이스")
                 auto_path = MonsterExporter.get_export_filepath(
-                    custom_prefix=_kw if _kw else None,
+                    custom_prefix=_prefix,
                     extension="csv",
                     product_id="nplace-db"
                 )

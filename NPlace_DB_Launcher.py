@@ -494,9 +494,11 @@ class MainApp(ctk.CTk):
     def export_to_excel(self):
         self.log("📊 엑셀 내보내기 시작...")
         try:
-            keyword = self.entry_keyword.get().strip() or "nplace.naver.com"
+            keyword = self.entry_keyword.get().strip()
+            area = self.entry_area.get().strip()
+            prefix = f"{area}_{keyword}" if (area and keyword) else (area or keyword or "N플레이스")
             from exporter import export_to_xlsx
-            file_path = export_to_xlsx(prefix=keyword)
+            file_path = export_to_xlsx(prefix=prefix)
             if file_path:
                 messagebox.showinfo("완료", f"엑셀 파일이 저장되었습니다:\n{file_path}")
                 self.log(f"✅ 엑셀 저장 완료: {file_path}")
