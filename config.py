@@ -19,7 +19,13 @@ if getattr(sys, 'frozen', False):
 else:
     LOCAL_BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# [NEW] Persistent User Settings Path (Zero-maintenance Data Policy)
+# [NEW] Persistent User Settings & License Path (Windows Roaming AppData)
+if sys.platform == "win32":
+    USER_SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "NPlace-DB")
+else:
+    USER_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".config", "MarketingMonster", "NPlace-DB")
+
+# [NEW] Persistent User Data Path (Zero-maintenance Data Policy - My Documents)
 USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
 
 # Centralized Persistent Paths
@@ -30,6 +36,7 @@ LOCAL_LOG_PATH = os.path.join(USER_DATA_PATH, "Logs")
 os.makedirs(USER_DATA_PATH, exist_ok=True)
 os.makedirs(ARCHIVE_DB_PATH, exist_ok=True)
 os.makedirs(LOCAL_LOG_PATH, exist_ok=True)
+os.makedirs(USER_SETTINGS_PATH, exist_ok=True)
 
 # Active session files (These will be archived on next run)
 LOCAL_DB_PATH = os.path.join(USER_DATA_PATH, "database.sqlite")
@@ -38,8 +45,28 @@ ENGINE_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "app.log")
 INSTA_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "instagram_dm.log")
 
 # Settings files
-LOCAL_TEMPLATE_FILE = os.path.join(USER_DATA_PATH, "templates.json")
-SETTINGS_FILE = os.path.join(USER_DATA_PATH, "user_settings.json")
+LOCAL_TEMPLATE_FILE = os.path.join(USER_SETTINGS_PATH, "templates.json")
+SETTINGS_FILE = os.path.join(USER_SETTINGS_PATH, "user_settings.json")
+
+# [NEW] Automatic Settings & License Migration from Old Paths to USER_SETTINGS_PATH
+import shutil
+
+# 1. Migrate settings and templates from old USER_DATA_PATH (Documents) to USER_SETTINGS_PATH (AppData)
+for filename in ["user_settings.json", "templates.json"]:
+    old_file = os.path.join(USER_DATA_PATH, filename)
+    new_file = os.path.join(USER_SETTINGS_PATH, filename)
+    if os.path.exists(old_file) and not os.path.exists(new_file):
+        try:
+            shutil.move(old_file, new_file)
+        except: pass
+
+# 2. Migrate license.dat from LOCAL_BASE_PATH/data/license.dat (old) to USER_SETTINGS_PATH
+old_lic = os.path.join(LOCAL_BASE_PATH, "data", "license.dat")
+new_lic = os.path.join(USER_SETTINGS_PATH, "license.dat")
+if os.path.exists(old_lic) and not os.path.exists(new_lic):
+    try:
+        shutil.move(old_lic, new_lic)
+    except: pass
 
 # [NEW] Automatic Data Migration (Rule 3.3: Portable -> Persistent)
 # Migration should only happen ONCE to prevent old data from reappearing after a reset
@@ -47,16 +74,28 @@ migration_marker = os.path.join(USER_DATA_PATH, ".migration_done")
 old_data_dir = os.path.join(LOCAL_BASE_PATH, "data")
 
 if not os.path.exists(migration_marker) and os.path.exists(old_data_dir):
-    import shutil
-    migrated_any = False
-    for filename in ["database.sqlite", "templates.json", "user_settings.json"]:
+    # database.sqlite
+    old_db = os.path.join(old_data_dir, "database.sqlite")
+    if os.path.exists(old_db) and not os.path.exists(LOCAL_DB_PATH):
+        try:
+            shutil.copy2(old_db, LOCAL_DB_PATH)
+        except: pass
+    
+    # settings & templates
+    for filename in ["templates.json", "user_settings.json"]:
         old_file = os.path.join(old_data_dir, filename)
-        new_file = os.path.join(USER_DATA_PATH, filename)
+        new_file = os.path.join(USER_SETTINGS_PATH, filename)
         if os.path.exists(old_file) and not os.path.exists(new_file):
             try:
                 shutil.copy2(old_file, new_file)
-                migrated_any = True
             except: pass
+
+    # license.dat
+    old_lfile = os.path.join(old_data_dir, "license.dat")
+    if os.path.exists(old_lfile) and not os.path.exists(new_lic):
+        try:
+            shutil.copy2(old_lfile, new_lic)
+        except: pass
     
     # Always create marker even if no files were found, to prevent future checks
     try:

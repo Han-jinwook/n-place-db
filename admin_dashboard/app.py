@@ -1513,6 +1513,7 @@ if st.session_state['active_page'] == 'Shop Search':
             # [NEW] Single Trigger Button for CSV Export & Folder Open
             if st.button("📁 작업 폴더 열기 (엑셀 변환)", use_container_width=True, key="open_workspace_btn", type="primary"):
                 try:
+                    exported = False
                     if exists and _EXPORTER_AVAILABLE:
                         import sqlite3 as _sqlite3
                         import pandas as _pd
@@ -1526,21 +1527,23 @@ if st.session_state['active_page'] == 'Shop Search':
                             file_path = MonsterExporter.get_export_filepath(
                                 custom_prefix=_kw if _kw else None,
                                 extension="csv",
-                                product_id="nplace-db",
-                                base_dir=config.USER_DATA_PATH
+                                product_id="nplace-db"
                             )
                             drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
                             df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
                             df_ex.to_csv(file_path, index=False, encoding='utf-8-sig')
                             st.toast("✅ 최신 결과가 엑셀(CSV)로 변환되었습니다.")
+                            MonsterExporter.open_in_explorer(file_path)
+                            exported = True
                     
-                    # Open the root USER_DATA_PATH
-                    if sys.platform == "win32":
-                        os.startfile(config.USER_DATA_PATH)
-                    elif sys.platform == "darwin":
-                        subprocess.Popen(["open", config.USER_DATA_PATH])
-                    else:
-                        subprocess.Popen(["xdg-open", config.USER_DATA_PATH])
+                    if not exported:
+                        # Open the root USER_DATA_PATH (Fallback)
+                        if sys.platform == "win32":
+                            os.startfile(config.USER_DATA_PATH)
+                        elif sys.platform == "darwin":
+                            subprocess.Popen(["open", config.USER_DATA_PATH])
+                        else:
+                            subprocess.Popen(["xdg-open", config.USER_DATA_PATH])
                 except Exception as e:
                     st.error(f"작업 폴더 열기 실패: {e}")
 

@@ -19,7 +19,7 @@ class SupabaseAuthManager:
     경량화를 실현하고, 기존 개별 앱의 로컬 라이선스 파일 보존 메커니즘을 동일하게 유지합니다.
     """
     
-    LICENSE_FILE = os.path.join(config.LOCAL_BASE_PATH, "data", "license.dat")
+    LICENSE_FILE = os.path.join(config.USER_SETTINGS_PATH, "license.dat")
     _collection_limit = None
     _serial_key = None
 

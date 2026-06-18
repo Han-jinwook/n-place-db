@@ -4,7 +4,7 @@ import os
 import config
 from 라이브러리.exporter import MonsterExporter
 
-def export_to_xlsx(db_path: str = None, prefix: str = "nplace.naver.com"):
+def export_to_xlsx(db_path: str = None, prefix: str = "N플레이스"):
     """
     Exports all data from the SQLite 'shops' table to an Excel file.
     Returns the path to the created file, or None if failed.
@@ -48,7 +48,7 @@ def export_to_xlsx(db_path: str = None, prefix: str = "nplace.naver.com"):
         print(f"Excel Export Error: {e}")
         return None
 
-def export_to_csv(db_path: str = None, prefix: str = "nplace.naver.com"):
+def export_to_csv(db_path: str = None, prefix: str = "N플레이스"):
     """
     Exports all data to a CSV file with utf-8-sig encoding for Excel compatibility.
     """

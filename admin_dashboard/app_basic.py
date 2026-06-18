@@ -326,7 +326,7 @@ with st.sidebar:
             st.info("기간 만료 또는 중복 로그인 등으로 인해 접근이 제한되었습니다. 관리자에게 문의하세요.")
             if st.button("인증 파일 리셋 (재로그인)"):
                 try:
-                    target_license = os.path.join(config.LOCAL_BASE_PATH, "data", "license.dat")
+                    target_license = AuthManager.LICENSE_FILE
                     if os.path.exists(target_license):
                         os.remove(target_license)
                     st.rerun()
