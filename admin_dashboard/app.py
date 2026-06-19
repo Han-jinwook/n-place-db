@@ -53,13 +53,18 @@ st.set_page_config(
 # [가이드 준수] Ultra Wide Full-Width CSS (Force Immediate Expansion)
 st.markdown("""
     <style>
-    /* 메인 컨테이너 최대 확장 */
+    /* 메인 컨테이너 최대 확장 및 상단 여백 제거 */
     .block-container {
-        padding-top: 1rem !important;
+        padding-top: 0rem !important;
         padding-bottom: 0rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
         max-width: 98% !important;
+    }
+    /* 상단 헤더 영역 완전히 제거 */
+    [data-testid="stHeader"], .stAppHeader {
+        display: none !important;
+        height: 0px !important;
     }
     /* 앱 전체 너비 고정 */
     .stApp {
