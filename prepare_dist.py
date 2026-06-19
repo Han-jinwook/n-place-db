@@ -108,7 +108,8 @@ def cleanup():
             print(f"- Copying and writing dist files into: {dist_folder_name}...")
             
             # Remove old legacy files to prevent duplicates
-            old_files = ["NPlace-DB-실행.bat", "사용방법_필독(처음 실행시 필수 확인).txt"]
+            # Remove old legacy files to prevent duplicates
+            old_files = ["NPlace-DB-실행.bat", "사용방법_필독(처음 실행시 필수 확인).txt", "zip풀고 최초 1회실행.bat"]
             for old_file in old_files:
                 old_file_path = os.path.join(dist_final_dir, old_file)
                 if os.path.exists(old_file_path):
@@ -119,7 +120,7 @@ def cleanup():
                         print(f"  Warning removing {old_file}: {e}")
 
             # [A] Create Dynamic Version-Correct Batch Launcher
-            launcher_path = os.path.join(dist_final_dir, "zip풀고 최초 1회실행.bat")
+            launcher_path = os.path.join(dist_final_dir, "실행 오류시 최초 1회실행.bat")
             launcher_content = f"""@echo off
 setlocal
 title NPlace-DB Launcher
@@ -162,12 +163,14 @@ exit
 """
             with open(launcher_path, "w", encoding="euc-kr") as lf:
                 lf.write(launcher_content)
-            print("  Created: zip풀고 최초 1회실행.bat")
+            print("  Created: 실행 오류시 최초 1회실행.bat")
 
             # [B] Copy docs/ folder (clean documents)
             dist_docs_dir = os.path.join(dist_final_dir, "docs")
             if os.path.exists(dist_docs_dir):
+                import shutil
                 shutil.rmtree(dist_docs_dir)
+            import shutil
             shutil.copytree(os.path.join(root_dir, "docs"), dist_docs_dir)
             print("  Copied: docs/ folder")
 
@@ -186,7 +189,7 @@ exit
 2. 🚀 [프로그램 실행 방법]
    - 폴더 내의 [ NPlace-DB-v{v}.exe ]를 더블클릭하여 바로 실행하시면 됩니다.
    ⚠️ 만약 실행 시 "VCRUNTIME140.dll 누락" 등 시스템 오류창이 뜬다면,
-      옆에 있는 [ zip풀고 최초 1회실행.bat ] 파일을 가동하여 10초 만에 해결하시면 됩니다.
+      옆에 있는 [ 실행 오류시 최초 1회실행.bat ] 파일을 가동하여 10초 만에 해결하시면 됩니다.
 
 3. 🛡️ [백신 오진 대처법]
    - 본 마케팅 도구 실행 시 윈도우 디펜더/V3/알약 등이 바이러스로 오진하여 차단할 수 있습니다.
@@ -200,7 +203,7 @@ exit
                 rf.write(readme_content)
             print("  Created: 사용전_필독.txt")
 
-            # [D] Copy dependencies folder
+# [D] Copy dependencies folder
             dep_src = os.path.join(root_dir, "dependencies")
             dep_target = os.path.join(dist_final_dir, "dependencies")
             if os.path.exists(dep_src):
@@ -210,15 +213,8 @@ exit
                 print("  Copied: dependencies/ folder")
             
             # 8. [ZIP ARCHIVE] Automatically Compress to .zip
-            print(f"- Compressing distribution folder into: dist/{dist_folder_name}.zip...")
-            zip_out_path = os.path.join(root_dir, "dist", dist_folder_name)
-            shutil.make_archive(
-                base_name=zip_out_path,
-                format="zip",
-                root_dir=os.path.join(root_dir, "dist"),
-                base_dir=dist_folder_name
-            )
-            print(f"[Success] ZIP compression complete! Final package: dist/{dist_folder_name}.zip")
+            # Zip compression is skipped as requested by user
+            print(f"[Success] Distribution folder is ready at: {os.path.join('dist', dist_folder_name)}")
             
         except Exception as e:
             print(f"[Error] Error during packaging: {e}")

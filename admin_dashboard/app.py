@@ -574,8 +574,8 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2) !important;
     }
 
-    [data-testid="stHeader"] { background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); }
-    .block-container { padding-top: 1rem !important; padding-bottom: 5rem !important; }
+    [data-testid="stHeader"] { display: none !important; }
+    .block-container { padding-top: 0rem !important; padding-bottom: 2rem !important; margin-top: -3rem !important; }
     
     /* Global vertical gap reduction */
     [data-testid="stVerticalBlock"] {
