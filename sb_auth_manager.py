@@ -4,7 +4,7 @@ import uuid
 import logging
 import requests
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import config
 from crawler.local_db_handler import LocalDBHandler
 from 라이브러리.auth import MonsterAuth
@@ -76,7 +76,7 @@ class SupabaseAuthManager:
         
         # 1. 서버(Supabase) REST API 직접 조회 (0.5초 타임아웃 강제화)
         try:
-            url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?hwid=eq.{hwid}&select=used_count"
+            url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?hwid=eq.{hwid}&select=used_count,created_at"
             headers = {
                 "apikey": config.SUPABASE_KEY,
                 "Authorization": f"Bearer {config.SUPABASE_KEY}",
@@ -87,9 +87,17 @@ class SupabaseAuthManager:
                 data = res.json()
                 if data:
                     used_count = data[0].get("used_count", 0)
+                    created_at_str = data[0].get("created_at")
+                    
                     if used_count >= 50:
-                        logger.warning(f"🚫 서버 기록: HWID {hwid} 체험판 한도 소진")
+                        logger.warning(f"🚫 서버 기록: HWID {hwid} 체험판 한도 소진 (50건)")
                         return False
+                        
+                    if created_at_str:
+                        created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                        if datetime.now(timezone.utc) > created_at + timedelta(days=5):
+                            logger.warning(f"🚫 서버 기록: HWID {hwid} 체험판 기간 만료 (5일 초과)")
+                            return False
         except requests.exceptions.Timeout:
             logger.warning("⚠️ 서버 체험판 조회 시간 초과 (0.5초 제한) - 로컬 검증 진행")
         except Exception as e:
@@ -220,8 +228,7 @@ class SupabaseAuthManager:
                 }
                 payload = {
                     "hwid": hwid,
-                    "status": "active",
-                    "last_started_at": datetime.utcnow().isoformat()
+                    "status": "active"
                 }
                 requests.post(url, headers=headers, json=payload, timeout=0.5)
             except Exception as e:
