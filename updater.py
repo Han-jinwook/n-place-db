@@ -52,6 +52,16 @@ class MonsterUpdater:
     def download_update(cls, download_url, target_filename="update_package.zip"):
         """[브릿지 구현] 공통 라이브러리 스트리밍 다운로드 연동"""
         try:
+            # BUILD_TYPE에 따라 URL 및 타겟 파일명 조정
+            build_type = getattr(config, 'BUILD_TYPE', 'PRO')
+            
+            # download_url 은 보통 .../NPlace-DB-Pro.zip 형식으로 DB에 등록됨.
+            # 만약 앱이 TRIAL 빌드라면, Pro.zip 을 Trial.zip 으로 변경해서 다운로드.
+            if build_type == "TRIAL" and "Pro.zip" in download_url:
+                download_url = download_url.replace("Pro.zip", "Trial.zip")
+            elif build_type == "PRO" and "Trial.zip" in download_url:
+                download_url = download_url.replace("Trial.zip", "Pro.zip")
+                
             logger.info(f"📥 업데이트 다운로드 시작: {download_url}")
             success = CommonUpdater.download_to(download_url, target_filename)
             if success:
@@ -75,8 +85,16 @@ class MonsterUpdater:
             # 배치 파일 경로
             bat_path = os.path.join(app_dir, "monster_update_helper.bat")
             
-            # 새 실행 파일 이름 (ZIP이 아니라 단일 파일 다운로드 가정 시)
-            new_exe = os.path.join(app_dir, "Place-DB-Pro_new.exe")
+            # 새 실행 파일 이름 (현재 빌드 타입에 맞춰 실행 파일 이름 추론)
+            build_type = getattr(config, 'BUILD_TYPE', 'PRO')
+            v = config.CURRENT_VERSION
+            
+            # 압축 해제 후 생성될 디렉토리 이름 예측
+            extracted_folder = f"NPlace-DB-{build_type}-v{v}"
+            extracted_exe_name = f"NPlace-DB-{build_type}-v{v}.exe"
+            
+            # 압축을 풀면 디렉토리 안에 exe가 있으므로
+            new_exe = os.path.join(app_dir, extracted_folder, extracted_exe_name)
             
             # ZIP 압축 해제 처리 (압축된 배포일 경우)
             if update_package_path.endswith('.zip'):
@@ -86,11 +104,12 @@ class MonsterUpdater:
                     zip_ref.extractall(app_dir)
                 os.remove(update_package_path)
             
-            # 배치 파일 내용 생성 (기존 로직 동일 유지)
+            # 배치 파일 내용 생성 (폴더 내 exe를 복사해오고 폴더 지움)
             bat_content = f"""@echo off
 timeout /t 2 /nobreak > nul
 if exist "{current_exe}" del /f /q "{current_exe}"
 if exist "{new_exe}" move /y "{new_exe}" "{current_exe}"
+if exist "{os.path.join(app_dir, extracted_folder)}" rmdir /s /q "{os.path.join(app_dir, extracted_folder)}"
 start "" "{current_exe}"
 del "%~f0"
 """

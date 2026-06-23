@@ -95,37 +95,46 @@ class AuthWindow(ctk.CTk):
                                             height=55, corner_radius=16, command=self.authenticate)
         self.btn_auth_submit.pack(pady=(15, 10), padx=15, fill="x")
 
-        self.btn_goto_trial = ctk.CTkButton(self.auth_stage, text="정품 키가 없으신가요? (1회 한정 50건 체험하기)", 
-                                           font=("Arial", 12, "underline"),
-                                           fg_color="transparent", text_color="#A855F7",
-                                           hover_color=self.bg_dark,
-                                           height=30, command=self.show_welcome_stage)
-        self.btn_goto_trial.pack(side="bottom", pady=5)
+        # TRIAL 버전인 경우에만 웰컴 화면 렌더링, PRO 버전은 웰컴 화면 아예 없음
+        if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL":
+            self.btn_goto_trial = ctk.CTkButton(self.auth_stage, text="정품 키가 없으신가요? (1회 한정 50건 체험하기)", 
+                                               font=("Arial", 12, "underline"),
+                                               fg_color="transparent", text_color="#A855F7",
+                                               hover_color=self.bg_dark,
+                                               height=30, command=self.show_welcome_stage)
+            self.btn_goto_trial.pack(side="bottom", pady=5)
+            
+            # --- Stage 2: Welcome/Trial Stage ---
+            self.welcome_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
+            
+            self.lbl_welcome = ctk.CTkLabel(self.welcome_stage, text="환영합니다!", 
+                                           font=("Arial", 22, "bold"), text_color=self.text_white)
+            self.lbl_welcome.pack(pady=(10, 10))
 
-        # --- Stage 2: Welcome/Trial Stage (Hidden by default) ---
-        self.welcome_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
-        
-        self.lbl_welcome = ctk.CTkLabel(self.welcome_stage, text="환영합니다!", 
-                                       font=("Arial", 22, "bold"), text_color=self.text_white)
-        self.lbl_welcome.pack(pady=(10, 10))
+            self.lbl_trial_desc = ctk.CTkLabel(self.welcome_stage, 
+                                               text="NPlace-DB의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[무기한, 총 50건 제공]", 
+                                               font=("Arial", 16, "bold"), text_color="#A855F7", justify="center")
+            self.lbl_trial_desc.pack(pady=(0, 25))
 
-        self.lbl_trial_desc = ctk.CTkLabel(self.welcome_stage, 
-                                           text="NPlace-DB의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[생애 단 1회, 총 50건 제공]", 
-                                           font=("Arial", 16, "bold"), text_color="#A855F7", justify="center")
-        self.lbl_trial_desc.pack(pady=(0, 25))
+            self.btn_start_trial = ctk.CTkButton(self.welcome_stage, text="1회 한정 50건 체험하기", 
+                                                font=("Arial", 18, "bold"),
+                                                fg_color=self.brand_purple, hover_color="#5300ce",
+                                                height=70, corner_radius=20, command=self.start_trial_flow)
+            self.btn_start_trial.pack(pady=(0, 20), fill="x", padx=10)
 
-        self.btn_start_trial = ctk.CTkButton(self.welcome_stage, text="1회 한정 50건 체험하기", 
-                                            font=("Arial", 18, "bold"),
-                                            fg_color=self.brand_purple, hover_color="#5300ce",
-                                            height=70, corner_radius=20, command=self.start_trial_flow)
-        self.btn_start_trial.pack(pady=(0, 20), fill="x", padx=10)
-
-        self.btn_goto_auth = ctk.CTkButton(self.welcome_stage, text="뒤로 가기 (정품 키 등록)", 
-                                          font=("Arial", 12, "underline"),
-                                          fg_color="transparent", text_color=self.text_muted,
-                                          hover_color=self.bg_dark,
-                                          height=30, command=self.show_auth_stage)
-        self.btn_goto_auth.pack(side="bottom", pady=10)
+            self.btn_goto_auth = ctk.CTkButton(self.welcome_stage, text="뒤로 가기 (정품 키 등록)", 
+                                              font=("Arial", 12, "underline"),
+                                              fg_color="transparent", text_color=self.text_muted,
+                                              hover_color=self.bg_dark,
+                                              height=30, command=self.show_auth_stage)
+            self.btn_goto_auth.pack(side="bottom", pady=10)
+            
+            # 기본 화면 설정
+            self.auth_stage.pack_forget()
+            self.welcome_stage.pack(fill="both", expand=True, padx=20, pady=20)
+        else:
+            # PRO 빌드
+            pass
 
 
         self.status_label = ctk.CTkLabel(self.main_card, text="", 

@@ -2,31 +2,19 @@ import PyInstaller.__main__
 import os
 import shutil
 import config
+import re
 
-def build():
-    v = config.CURRENT_VERSION
-    print(f"N-Place-DB Build Start (v{v})...")
+def build_version(v, build_type):
+    print(f"\n=========================================")
+    print(f"N-Place-DB Build Start (v{v} - {build_type})")
+    print(f"=========================================\n")
 
-    
-    # 1. Resilient Cleanup
-    try:
-        if os.path.exists("build"): shutil.rmtree("build", ignore_errors=True)
-        # Clean up previous versions in dist (Disabled by request: "앞에 폴더 지우지 말고")
-        # if os.path.exists("dist"):
-        #     for d in os.listdir("dist"):
-        #         if d.startswith("NPlace-DB"):
-        #             shutil.rmtree(os.path.join("dist", d), ignore_errors=True)
-                    
-        print("Cleanup done (including pycache).")
-    except Exception as e:
-        print(f"Warning during cleanup: {e}")
-    
-    # 2. PyInstaller Arguments
+    # PyInstaller Arguments
+    exe_name = f"NPlace-DB-{build_type}-v{v}"
     args = [
         'NPlace_DB_Launcher.py',              
-        f'--name=NPlace-DB-v{v}',  # [FIX] Use version number for unique build
+        f'--name={exe_name}',
         '--onedir',             
-
         '--noconsole',          
         '--noconfirm',          
         '--collect-all=streamlit',
@@ -40,7 +28,6 @@ def build():
         '--add-data=assets;assets',
         '--add-data=config.py;.',
         '--add-data=admin_dashboard/templates.json;.',
-        # [FIX] Engine scripts must be included as data files so runpy.run_path() can find them
         '--add-data=step1_refined_crawler.py;.',
         '--add-data=engine_recover_missing.py;.',
         '--add-data=auth.py;.',
@@ -65,19 +52,50 @@ def build():
         '--clean'
     ]
     
-    # 3. Execute Build
+    # Execute Build
     try:
         PyInstaller.__main__.run(args)
-        print("\n[Build] PyInstaller compilation completed successfully!")
-        
-        # 4. Invoke Automated Packaging & Zip (Temporarily disabled as requested)
-        # import prepare_dist
-        # print("\n[Build] Launching prepare_dist.py to sanitize and package the final ZIP...")
-        # prepare_dist.cleanup()
-        print("\n[Build] Automated zipping skipped as requested.")
-        
+        print(f"\n[{build_type} Build] PyInstaller compilation completed successfully!")
     except Exception as e:
-        print(f"\nBuild Failed: {e}")
+        print(f"\n[{build_type} Build] Failed: {e}")
+
+def modify_config_build_type(config_path, build_type):
+    with open(config_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Replace BUILD_TYPE = "..." with the new build_type
+    new_content = re.sub(r'BUILD_TYPE\s*=\s*"[^"]+"', f'BUILD_TYPE = "{build_type}"', content)
+    
+    with open(config_path, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    print(f"Modified config.py to BUILD_TYPE = '{build_type}'")
+
+def build_all():
+    v = config.CURRENT_VERSION
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.py')
+    
+    # Save original config
+    with open(config_path, 'r', encoding='utf-8') as f:
+        original_config = f.read()
+
+    try:
+        # 1. Resilient Cleanup
+        if os.path.exists("build"): shutil.rmtree("build", ignore_errors=True)
+        print("Cleanup done (including pycache).")
+
+        # 2. Build PRO version
+        modify_config_build_type(config_path, "PRO")
+        build_version(v, "PRO")
+        
+        # 3. Build TRIAL version
+        modify_config_build_type(config_path, "TRIAL")
+        build_version(v, "TRIAL")
+
+    finally:
+        # Restore original config.py
+        with open(config_path, 'w', encoding='utf-8') as f:
+            f.write(original_config)
+        print("\nRestored original config.py")
 
 if __name__ == "__main__":
-    build()
+    build_all()
