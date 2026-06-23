@@ -92,12 +92,6 @@ class SupabaseAuthManager:
                     if used_count >= 50:
                         logger.warning(f"🚫 서버 기록: HWID {hwid} 체험판 한도 소진 (50건)")
                         return False
-                        
-                    if created_at_str:
-                        created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
-                        if datetime.now(timezone.utc) > created_at + timedelta(days=5):
-                            logger.warning(f"🚫 서버 기록: HWID {hwid} 체험판 기간 만료 (5일 초과)")
-                            return False
         except requests.exceptions.Timeout:
             logger.warning("⚠️ 서버 체험판 조회 시간 초과 (0.5초 제한) - 로컬 검증 진행")
         except Exception as e:
