@@ -21,7 +21,7 @@ def cleanup():
 
     # 2. Clear Database & License
     print("- Deleting local DB and checkpoint (Clean distribution)...")
-    db_file = os.path.join(root_dir, "data", "database.sqlite")
+    db_file = os.path.join(root_dir, "data", f"{config.PRODUCT_ID}.sqlite")
     checkpoint_file = os.path.join(root_dir, "crawler_checkpoint.json")
     
     for f in [db_file, checkpoint_file]:

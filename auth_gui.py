@@ -148,14 +148,7 @@ class AuthWindow(ctk.CTk):
                     self.authenticated = True
                     self.after(0, self.destroy)
                 else:
-                    # [NEW] 체험판 가능 여부 체크
-                    if not AuthManager.is_trial_available():
-                        logger.info("🚫 체험판 한도 소진. 인증 화면으로 자동 전환합니다.")
-                        self.after(0, self.show_auth_stage)
-                        self.after(0, lambda: self.status_label.configure(
-                            text="체험 한도(50건) 소진. 정품 인증이 필요합니다.", 
-                            text_color="#EF4444"
-                        ))
+                    pass
             except Exception as e:
                 logger.error(f"Initial check error: {e}")
                 

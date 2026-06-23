@@ -52,15 +52,12 @@ class MainApp(ctk.CTk):
 
     def check_test_license_notification(self):
         key = AuthManager.get_serial_key()
-        logger.debug(f"Checking test license notification (Basic). Key: {key}")
-        if key and (key.startswith('TEST-') or "-TEST-" in key):
-            logger.info("Test license detected (Basic)! Displaying guidance popup.")
+        if key == "TRIAL-MODE":
             messagebox.showinfo(
-                "테스트 라이선스 안내",
-                "현재 테스트용 인증키로 접속되었습니다.\n\n"
-                "• 이 인증키는 테스트용으로 최대 100개까지 수집이 가능합니다.\n"
-                "• 사용 기간은 발급일로부터 1일(24시간) 동안 가능합니다.\n\n"
-                "정식 버전 전환을 원하시면 관리자에게 문의해주세요."
+                "체험판 안내",
+                "현재 체험판 모드로 실행 중입니다.\n\n"
+                "• 체험판은 하루 최대 50건까지 수집이 가능합니다.\n"
+                "• 정식 버전 전환을 원하시면 관리자에게 문의해주세요."
             )
 
     def setup_ui(self):

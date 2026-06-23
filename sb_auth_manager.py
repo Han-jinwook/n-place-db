@@ -3,6 +3,7 @@ import os
 import uuid
 import logging
 import requests
+import threading
 from datetime import datetime
 import config
 from crawler.local_db_handler import LocalDBHandler
@@ -20,6 +21,10 @@ class SupabaseAuthManager:
     """
     
     LICENSE_FILE = os.path.join(config.USER_SETTINGS_PATH, "license.dat")
+    # [NEW] 실시간 체험판 동기화 변수
+    _trial_baseline = 0
+    _trial_session_max = 0
+    _trial_lock = threading.Lock()
     _collection_limit = None
     _serial_key = None
 
@@ -100,12 +105,109 @@ class SupabaseAuthManager:
             return False
 
     @classmethod
+    def get_and_sync_trial_used_count(cls) -> int:
+        """Supabase와 AppData 설정을 비교하여 더 큰 값으로 체험판 누적 사용량을 동기화합니다."""
+        if cls._serial_key != "TRIAL-MODE":
+            return 0
+            
+        try:
+            hwid = cls.get_hwid()
+            
+            # 1. AppData에서 로컬 카운트 읽기
+            import json
+            appdata_dir = os.path.join(os.environ.get("APPDATA", ""), "MarketingMonster", config.PRODUCT_ID)
+            settings_file = os.path.join(appdata_dir, "trial_settings.json")
+            
+            local_count = 0
+            if os.path.exists(settings_file):
+                try:
+                    with open(settings_file, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        local_count = data.get("used_count", 0)
+                except: pass
+                
+            # 2. Supabase에서 서버 카운트 읽기
+            url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?hwid=eq.{hwid}&select=used_count"
+            headers = {
+                "apikey": config.SUPABASE_KEY,
+                "Authorization": f"Bearer {config.SUPABASE_KEY}",
+                "Content-Type": "application/json"
+            }
+            res = requests.get(url, headers=headers, timeout=2.0)
+            server_count = 0
+            if res.status_code == 200:
+                data = res.json()
+                if data:
+                    server_count = data[0].get("used_count", 0)
+                else:
+                    # 서버에 기록이 없다면 (어드민이 삭제/초기화 한 경우) 로컬 기록도 강제 초기화
+                    local_count = 0
+                
+            # 3. 최대값을 진실로 채택 (서버가 0이면 로컬도 0이므로 초기화됨)
+            true_count = max(local_count, server_count)
+            
+            # 4. AppData 및 Supabase에 업데이트
+            cls.update_trial_used_count(true_count)
+            
+            cls._trial_baseline = true_count
+            cls._trial_session_max = 0
+            return true_count
+        except Exception as e:
+            logger.error(f"체험판 수집량 동기화 실패: {e}")
+            return cls._trial_baseline
+
+    @classmethod
+    def update_trial_used_count(cls, new_count: int):
+        """새로운 체험판 수집량을 AppData와 Supabase에 반영합니다."""
+        try:
+            hwid = cls.get_hwid()
+            
+            # AppData 업데이트
+            import json
+            appdata_dir = os.path.join(os.environ.get("APPDATA", ""), "MarketingMonster", config.PRODUCT_ID)
+            os.makedirs(appdata_dir, exist_ok=True)
+            settings_file = os.path.join(appdata_dir, "trial_settings.json")
+            
+            with open(settings_file, "w", encoding="utf-8") as f:
+                json.dump({"used_count": new_count}, f)
+                
+            # Supabase 업데이트
+            update_url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?hwid=eq.{hwid}"
+            payload = {"used_count": new_count}
+            headers = {
+                "apikey": config.SUPABASE_KEY,
+                "Authorization": f"Bearer {config.SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            }
+            requests.patch(update_url, headers=headers, json=payload, timeout=2.0)
+        except Exception as e:
+            logger.error(f"체험판 수집량 업데이트 실패: {e}")
+            
+    @classmethod
+    def record_session_progress(cls, session_saved: int):
+        """현재 크롤링 세션에서 수집된 양을 실시간으로 반영합니다."""
+        if cls._serial_key != "TRIAL-MODE":
+            return
+            
+        with cls._trial_lock:
+            if session_saved > cls._trial_session_max:
+                increment = session_saved - cls._trial_session_max
+                cls._trial_session_max = session_saved
+                cls._trial_baseline += increment
+                new_baseline = cls._trial_baseline
+            else:
+                return
+                
+        # Do network call outside lock
+        cls.update_trial_used_count(new_baseline)
+
+    @classmethod
     def start_trial(cls) -> tuple[bool, str]:
         """[REST 경량화] 키 없이 즉시 체험판 모드로 시작합니다. (생애 1회 50건)"""
         try:
-            if not cls.is_trial_available():
-                return False, "체험판 수집 한도(50건)를 모두 소진하셨습니다. 정식 라이선스를 이용해 주세요."
-            
+            # [NEW] 한도가 끝나도 대시보드 내부 진입은 허용 (크롤링 시작 시에만 차단)
+
             # 서버에 체험판 시작 기록 (Supabase REST API Upsert 직접 통신)
             hwid = cls.get_hwid()
             try:

@@ -10,7 +10,7 @@ except ImportError:
 # [카페 몬스터] 통합 브랜드 및 기술 규격 적용
 
 PRODUCT_ID = "NPlace-DB"
-CURRENT_VERSION = "1.1.50"
+CURRENT_VERSION = "1.1.56"
 
 # [PRO] Determine dynamic base path: Executable dir if frozen, else project root
 import sys
@@ -39,7 +39,16 @@ os.makedirs(LOCAL_LOG_PATH, exist_ok=True)
 os.makedirs(USER_SETTINGS_PATH, exist_ok=True)
 
 # Active session files (These will be archived on next run)
-LOCAL_DB_PATH = os.path.join(USER_DATA_PATH, "database.sqlite")
+LOCAL_DB_PATH = os.path.join(USER_DATA_PATH, f"{PRODUCT_ID}.sqlite")
+
+# [MIGRATION] Rename old database.sqlite to NPlace-DB.sqlite if it exists
+_old_generic_db = os.path.join(USER_DATA_PATH, "database.sqlite")
+if os.path.exists(_old_generic_db) and not os.path.exists(LOCAL_DB_PATH):
+    try:
+        import shutil
+        shutil.move(_old_generic_db, LOCAL_DB_PATH)
+    except: pass
+
 PROGRESS_FILE = os.path.join(LOCAL_LOG_PATH, "progress.json")
 ENGINE_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "app.log")
 INSTA_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "instagram_dm.log")

@@ -17,7 +17,7 @@ class LocalDBHandler:
             else:
                 # Relative to this file's parent's parent
                 base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            self.db_path = os.path.join(base_path, "data", "database.sqlite")
+            self.db_path = os.path.join(base_path, "data", f"{config.PRODUCT_ID}.sqlite")
         else:
             self.db_path = db_path
             

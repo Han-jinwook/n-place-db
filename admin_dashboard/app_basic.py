@@ -332,12 +332,6 @@ with st.sidebar:
                     st.rerun()
                 except: pass
             st.stop() # Stop further execution
-        key = AuthManager.get_serial_key()
-        if key and (key.startswith('TEST-') or "-TEST-" in key):
-            st.warning("⚠️ 테스트 라이선스 사용 중")
-            st.caption("• 최대 100건 수집 가능\n• 1일(24시간) 동안 사용 가능")
-            if st.button("정식 라이선스 문의"):
-                  st.info("관리자에게 문의하여 정식 라이선스로 업그레이드하세요.")
     except Exception as e:
         logger.error(f"Test notice error: {e}")
 

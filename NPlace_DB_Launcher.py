@@ -134,15 +134,6 @@ class MainApp(ctk.CTk):
                 "• 수집된 데이터의 엑셀 저장 기능을 테스트해보실 수 있습니다.\n\n"
                 "정식 버전 전환을 원하시면 관리자에게 문의해주세요."
             )
-        elif key and (key.startswith('TEST-') or "-TEST-" in key):
-            logger.info("Test license detected! Displaying guidance popup.")
-            messagebox.showinfo(
-                "테스트 라이선스 안내",
-                "현재 테스트용 인증키로 접속되었습니다.\n\n"
-                "• 이 인증키는 테스트용으로 최대 100개까지 수집이 가능합니다.\n"
-                "• 사용 기간은 발급일로부터 1일(24시간) 동안 가능합니다.\n\n"
-                "정식 버전 전환을 원하시면 관리자에게 문의해주세요."
-            )
 
     def setup_ui(self):
         # Header
@@ -332,6 +323,8 @@ class MainApp(ctk.CTk):
             
             # 체험판 모드인 경우 누적 수집량을 체크 (Monster Rule 1.3 - Lifetime Limit)
             if serial == "TRIAL-MODE":
+                # [NEW] 서버와 동기화된 진짜 누적 수집량을 가져옵니다 (꼼수 방지)
+                current_total = AuthManager.get_and_sync_trial_used_count()
                 remaining = max(0, limit - current_total)
                 if remaining <= 0:
                     messagebox.showerror("체험 한도 초과", "무료 체험판 수집 한도(50건)를 모두 소진하셨습니다.\n정식 라이선스를 구매하여 이용해 주세요.")
@@ -424,6 +417,13 @@ class MainApp(ctk.CTk):
                         json_str = cleaned_line.split("PROGRESS_JSON:")[-1].strip()
                         data = json.loads(json_str)
                         self.after(0, self.update_progress_ui, data)
+                        
+                        # [NEW] 실시간 체험판 수집량 서버 동기화
+                        if AuthManager.get_serial_key() == "TRIAL-MODE":
+                            session_saved = data.get("success_count", 0)
+                            import threading
+                            threading.Thread(target=AuthManager.record_session_progress, args=(session_saved,), daemon=True).start()
+                            
                     except Exception as e:
                         logger.error(f"Failed to parse PROGRESS_JSON: {e}")
                 elif "Progress:" in cleaned_line:
@@ -652,6 +652,49 @@ if __name__ == "__main__":
         # Check for data directory presence
         os.makedirs("data", exist_ok=True)
         
+        # 0. Check for Updates
+        try:
+            logger.info("Checking for updates before launch...")
+            from updater import MonsterUpdater
+            update_info = MonsterUpdater.check_for_updates()
+            if update_info:
+                import tkinter as tk
+                from tkinter import messagebox
+                
+                root = tk.Tk()
+                root.withdraw()
+                latest_v = update_info.get("version")
+                note = update_info.get("release_notes", "새로운 버전이 출시되었습니다.")
+                ans = messagebox.askyesno("업데이트 알림", 
+                                        f"새로운 버전({latest_v})이 발견되었습니다.\n\n"
+                                        f"내용: {note}\n\n"
+                                        f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 재시작됩니다.)", parent=root)
+                if ans:
+                    progress_win = tk.Toplevel(root)
+                    progress_win.title("업데이트 다운로드 중...")
+                    progress_win.geometry("350x120")
+                    progress_win.update_idletasks()
+                    width = 350
+                    height = 120
+                    x = (progress_win.winfo_screenwidth() // 2) - (width // 2)
+                    y = (progress_win.winfo_screenheight() // 2) - (height // 2)
+                    progress_win.geometry(f'{width}x{height}+{x}+{y}')
+                    
+                    tk.Label(progress_win, text=f"버전 {latest_v} 패키지를 다운로드 중입니다.\n잠시만 기다려주세요...", font=("Arial", 11)).pack(pady=30)
+                    progress_win.update()
+
+                    url = update_info.get("download_url")
+                    temp_zip = "monster_update.zip"
+                    if MonsterUpdater.download_update(url, temp_zip):
+                        MonsterUpdater.apply_update_and_restart(temp_zip)
+                        sys.exit(0)
+                    else:
+                        messagebox.showerror("업데이트 실패", "다운로드 중 오류가 발생했습니다.", parent=root)
+                
+                root.destroy()
+        except Exception as update_err:
+            logger.error(f"Update check failed: {update_err}")
+
         # 1. HWID Authentication Flow
         if run_auth_flow(is_pro=True):
             logger.info("Authentication successful. Launching main dashboard launcher.")
