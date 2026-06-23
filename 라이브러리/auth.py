@@ -127,6 +127,7 @@ class MonsterAuth:
         # license_type 별 만료 기간 (일 단위)
         DURATION_MAP = {
             "TRIAL":    5,
+            "DELUXE":   30,
             "1M":       30,
             "3M":       90,
             "6M":       180,
