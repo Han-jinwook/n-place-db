@@ -71,10 +71,40 @@ class AuthWindow(ctk.CTk):
         self.hwid = AuthManager.get_hwid()
         self.authenticated = False
 
-        # --- Stage 1: Welcome/Trial Stage ---
-        self.welcome_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
-        self.welcome_stage.pack(fill="both", expand=True, padx=20, pady=20)
+        # --- Stage 1: Auth Stage (Default) ---
+        self.auth_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
+        self.auth_stage.pack(fill="both", expand=True, padx=20, pady=20)
 
+        self.lbl_auth_title = ctk.CTkLabel(self.auth_stage, text="NPlace-DB Pro", 
+                                          font=("Arial", 22, "bold"), text_color=self.text_white)
+        self.lbl_auth_title.pack(pady=(10, 5))
+        
+        self.lbl_auth_desc = ctk.CTkLabel(self.auth_stage, text="정품 라이선스 키를 입력해 주세요.", 
+                                         font=("Arial", 14), text_color=self.text_muted)
+        self.lbl_auth_desc.pack(pady=(0, 20))
+
+        self.entry_key = ctk.CTkEntry(self.auth_stage, placeholder_text="예: DELUXE-ABCDE-12345", 
+                                     height=58, font=("Arial", 18, "bold"), justify="center",
+                                     fg_color="#0F172A", border_color="#334155",
+                                     text_color=self.text_white, corner_radius=16)
+        self.entry_key.pack(padx=15, fill="x", pady=10)
+
+        self.btn_auth_submit = ctk.CTkButton(self.auth_stage, text="라이선스 인증 및 시작", 
+                                            font=("Arial", 16, "bold"),
+                                            fg_color=self.brand_purple, hover_color="#5300ce",
+                                            height=55, corner_radius=16, command=self.authenticate)
+        self.btn_auth_submit.pack(pady=(15, 10), padx=15, fill="x")
+
+        self.btn_goto_trial = ctk.CTkButton(self.auth_stage, text="정품 키가 없으신가요? (1회 한정 50건 체험하기)", 
+                                           font=("Arial", 12, "underline"),
+                                           fg_color="transparent", text_color="#A855F7",
+                                           hover_color=self.bg_dark,
+                                           height=30, command=self.show_welcome_stage)
+        self.btn_goto_trial.pack(side="bottom", pady=5)
+
+        # --- Stage 2: Welcome/Trial Stage (Hidden by default) ---
+        self.welcome_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
+        
         self.lbl_welcome = ctk.CTkLabel(self.welcome_stage, text="환영합니다!", 
                                        font=("Arial", 22, "bold"), text_color=self.text_white)
         self.lbl_welcome.pack(pady=(10, 10))
@@ -90,38 +120,13 @@ class AuthWindow(ctk.CTk):
                                             height=70, corner_radius=20, command=self.start_trial_flow)
         self.btn_start_trial.pack(pady=(0, 20), fill="x", padx=10)
 
-        self.btn_goto_auth = ctk.CTkButton(self.welcome_stage, text="이미 정품 키가 있습니다 (등록)", 
+        self.btn_goto_auth = ctk.CTkButton(self.welcome_stage, text="뒤로 가기 (정품 키 등록)", 
                                           font=("Arial", 12, "underline"),
                                           fg_color="transparent", text_color=self.text_muted,
                                           hover_color=self.bg_dark,
                                           height=30, command=self.show_auth_stage)
         self.btn_goto_auth.pack(side="bottom", pady=10)
 
-        # --- Stage 2: Auth Stage (Hidden by default) ---
-        self.auth_stage = ctk.CTkFrame(self.main_card, fg_color="transparent")
-        # Hidden initially
-        
-        self.lbl_auth_title = ctk.CTkLabel(self.auth_stage, text="정품 라이선스 인증", 
-                                          font=("Arial", 20, "bold"), text_color="#A855F7")
-        self.lbl_auth_title.pack(pady=(20, 10))
-
-        self.entry_key = ctk.CTkEntry(self.auth_stage, placeholder_text="CM-XXXX / DLX-XXXX", 
-                                     height=58, font=("Arial", 18, "bold"), justify="center",
-                                     fg_color="#0F172A", border_color="#334155",
-                                     text_color=self.text_white, corner_radius=16)
-        self.entry_key.pack(padx=15, fill="x", pady=10)
-
-        self.btn_auth_submit = ctk.CTkButton(self.auth_stage, text="인증 및 활성화", 
-                                            font=("Arial", 16, "bold"),
-                                            fg_color=self.brand_purple, hover_color="#5300ce",
-                                            height=55, corner_radius=16, command=self.authenticate)
-        self.btn_auth_submit.pack(pady=(15, 10), padx=15, fill="x")
-
-        self.btn_back_to_welcome = ctk.CTkButton(self.auth_stage, text="이전으로", 
-                                               font=("Arial", 12),
-                                               fg_color="transparent", text_color=self.text_muted,
-                                               command=self.show_welcome_stage)
-        self.btn_back_to_welcome.pack(pady=5)
 
         self.status_label = ctk.CTkLabel(self.main_card, text="", 
                                         font=("Arial", 12, "bold"), text_color="#F59E0B")
