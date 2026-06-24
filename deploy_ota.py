@@ -18,7 +18,7 @@ def zip_and_upload(dist_folder_name, zip_filename, github_pat, upload_url, heade
         os.remove(zip_filepath)
         
     shutil.make_archive(
-        base_name=os.path.join("dist", dist_folder_name),
+        base_name=os.path.join("dist", zip_filename.replace(".zip", "")),
         format='zip',
         root_dir="dist",
         base_dir=dist_folder_name
@@ -54,7 +54,7 @@ def main():
     # ---------------------------------------------------------
     # 1. GitHub Releases - Create Release
     # ---------------------------------------------------------
-    github_repo = "sundream7878/n-place-db"
+    github_repo = "Han-jinwook/n-place-db"
     tag_name = f"v{config.CURRENT_VERSION}"
     print(f"Creating GitHub Release {tag_name} in {github_repo}...")
     
