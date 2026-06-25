@@ -1295,32 +1295,26 @@ if page == 'Shop Search':
             
             st.write("<div style='margin-bottom:15px; border-bottom:1px solid var(--border);'></div>", unsafe_allow_html=True)
 elif page == 'Guide':
-    render_page_header("📖 카페 몬스터 사용 가이드", "guide_idx")
+    render_page_header("📖 사용 가이드", "guide_idx")
 
-    st.markdown("### 🚀 빠른 시작 가이드")
-    st.markdown("카페 몬스터의 강력한 데이터 수집 기능을 활용하는 방법입니다.")
-    st.markdown("---")
+    st.markdown("<br><br>", unsafe_allow_html=True)
     
-    st.markdown("#### 1. 검색 대상 및 타겟 설정")
-    st.markdown("- 좌측의 사이드바에서 **수집 키워드**를 입력합니다. (예: 미용실, 식당)")
-    st.markdown("- 수집을 원하지 않는 상호/업종이 있다면 **수집 제외 키워드**에 입력합니다.")
-    st.markdown("- 타겟으로 할 **지역 (시/도)**를 복수로 선택할 수 있습니다.")
-    st.markdown("- 특정 구/군의 데이터만 원한다면 **세부 구역 선택**에서 추가로 선택합니다.")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    st.markdown("#### 2. 수집 엔진 가동")
-    st.markdown("- 모든 설정을 마친 후 사이드바 하단의 **데이터 수집 시작** 버튼을 클릭합니다.")
-    st.markdown("- 엔진이 가동되면 예상 대상 수 및 현재까지 수집된 데이터 개수가 실시간으로 표시됩니다.")
-    st.markdown("- 중간에 정지하고 싶다면 **엔진 정지** 버튼을 누릅니다. (수집 엔진은 백그라운드에서 안전하게 중단됩니다.)")
+    st.info("💡 **가이드가 웹 버전으로 새롭게 이전되었습니다!**")
+    st.markdown("""
+        작업 화면을 가리지 않도록 **사용 가이드**가 웹페이지로 분리되었습니다. 
+        이제 **듀얼 모니터**나 **화면 분할**을 통해 한 화면에는 웹 가이드를 띄워두고, 
+        다른 화면에서는 프로그램 화면을 가리지 않고 쾌적하게 사용해 보세요!
+    """)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    st.markdown("#### 3. 데이터 관리 및 추출")
-    st.markdown("- **데이터수집 및 분석** 탭에서 수집 완료된 데이터를 확인하고 더 세부적으로 검색(필터링)할 수 있습니다.")
-    st.markdown("- 원하지 않는 데이터는 목록에서 클릭하여 선택한 후, ✕ 삭제 버튼을 눌러 목록에서 지울 수 있습니다.")
-    st.markdown("- 화면 상단의 **CSV 다운로드 버튼**을 누르면 전체 데이터가 다운로드됩니다.")
-    st.markdown("- ⚠️ **주의:** 브라우저 다운로드 폴더에 저장되거나, 최초 프로그램 창에서 'CSV 저장' 버튼을 누르면 프로그램 폴더 내 `exports/` 안에 엑셀/CSV 파일이 저장됩니다.")
+    st.link_button(
+        "🌐 웹 사용자 가이드 보러가기", 
+        "https://3monster.netlify.app/docs/nplace-db",
+        use_container_width=True
+    )
+    
+    st.markdown("<br><br><br><br>", unsafe_allow_html=True)
 
     # [NEW] Guide page end Customer Support link
     st.divider()
