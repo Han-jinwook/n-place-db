@@ -21,6 +21,18 @@ class AuthWindow(ctk.CTk):
         self.is_pro = is_pro
         self.title(f"[{config.BRAND_NAME_KR}] NPlace-DB 시작하기")
         
+        # Set Window Icon
+        def resource_path(relative_path):
+            try:
+                base_path = sys._MEIPASS
+            except Exception:
+                base_path = os.path.dirname(os.path.abspath(__file__))
+            return os.path.join(base_path, relative_path)
+            
+        icon_path = resource_path('assets/icon.ico')
+        if os.path.exists(icon_path):
+            self.iconbitmap(icon_path)
+        
         # Center the window (Initial Modal/Popup standard)
         width = 480
         height = 560

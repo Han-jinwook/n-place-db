@@ -14,6 +14,7 @@ def build_version(v, build_type):
     args = [
         'NPlace_DB_Launcher.py',              
         f'--name={exe_name}',
+        '--icon=assets/icon.ico',
         '--onedir',             
         '--noconsole',          
         '--noconfirm',          
