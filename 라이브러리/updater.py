@@ -21,7 +21,7 @@ class MonsterUpdater:
     def check_for_updates(cls, product_id, current_version, supabase_url=None, supabase_key=None):
         """서버에서 최신 버전을 확인하고 업데이트 정보 딕셔너리를 반환합니다."""
         url_base = supabase_url or os.getenv("SUPABASE_URL") or "https://suwinftalfgybvrnzruz.supabase.co"
-        key = supabase_key or os.getenv("SUPABASE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1d2luZnRhbGZneWJ2cm56cnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ3OTEsImV4cCI6MjA5MTg4MDc5MX0.OJAE_djjwIxR1pDNVx45HprOcAtU8gZopGJx8hvJMt4"
+        key = supabase_key or os.getenv("SUPABASE_KEY") or os.getenv("VITE_SUPABASE_ANON_KEY") or "sb_publishable_jUwQ1BWvG6F2H9GyELUoFw_mUOHbgWD"
         
         if not url_base or not key:
             logger.error("업데이트 체크 실패: Supabase 설정 정보 누락")
