@@ -1817,9 +1817,7 @@ with footer_col2:
     st.markdown("""
         <div style='text-align: right; margin-bottom: 20px;'>
             <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
-                <span style='background: linear-gradient(90deg, #1E293B 0%, #0F172A 100%); color: #FFFFFF; font-size: 0.85rem; font-weight: bold; border: 1px solid #334155; padding: 10px 18px; border-radius: 8px; display: inline-block; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);' onmouseover='this.style.transform="translateY(-2px)"; this.style.boxShadow="0 4px 6px rgba(0,0,0,0.3)";' onmouseout='this.style.transform="translateY(0)"; this.style.boxShadow="0 2px 4px rgba(0,0,0,0.2)";'>
-                    🎧 3Monster 고객센터
-                </span>
+                <img src='https://3monster.netlify.app/banners/cs-banner.png' style='max-height: 50px; width: auto; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s;' onmouseover='this.style.transform="scale(1.02)"' onmouseout='this.style.transform="scale(1)"' alt='3Monster 고객센터'>
             </a>
         </div>
     """, unsafe_allow_html=True)
