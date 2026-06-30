@@ -123,7 +123,7 @@ def main():
         "product_id": config.PRODUCT_ID,
         "version": config.CURRENT_VERSION,
         "download_url": github_download_url,
-        "release_notes": "N-Place-DB 최신 버전이 출시되었습니다. (버그 수정 및 안정성 개선)"
+        "release_notes": "⚡ 데이터 수집 속도 최적화 및 엑셀 저장 안정성 대폭 강화"
     }).execute()
     
     print("Supabase DB record inserted.")
