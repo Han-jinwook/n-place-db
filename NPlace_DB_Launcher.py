@@ -102,7 +102,7 @@ class MainApp(ctk.CTk):
         if messagebox.askyesno("업데이트 알림", 
                                 f"새로운 버전({latest_v})이 발견되었습니다.\n\n"
                                 f"내용: {note}\n\n"
-                                f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 재시작됩니다.)"):
+                                f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 시작됩니다.)"):
             self.perform_update(info)
 
     def perform_update(self, info):
@@ -668,7 +668,7 @@ if __name__ == "__main__":
                 ans = messagebox.askyesno("업데이트 알림", 
                                         f"새로운 버전({latest_v})이 발견되었습니다.\n\n"
                                         f"내용: {note}\n\n"
-                                        f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 재시작됩니다.)", parent=root)
+                                        f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 시작됩니다.)", parent=root)
                 if ans:
                     progress_win = tk.Toplevel(root)
                     progress_win.title("업데이트 다운로드 중...")

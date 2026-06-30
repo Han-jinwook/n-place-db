@@ -123,7 +123,7 @@ def main():
         "product_id": config.PRODUCT_ID,
         "version": config.CURRENT_VERSION,
         "download_url": github_download_url,
-        "release_notes": "Dual build (PRO/TRIAL) support added."
+        "release_notes": "N-Place-DB 최신 버전이 출시되었습니다. (버그 수정 및 안정성 개선)"
     }).execute()
     
     print("Supabase DB record inserted.")
