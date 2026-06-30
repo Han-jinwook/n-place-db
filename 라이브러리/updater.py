@@ -68,14 +68,19 @@ class MonsterUpdater:
     @classmethod
     def download_to(cls, download_url, save_path):
         """파일 다운로드 엔진 (대용량 패키지 스트리밍 다운로드 지원)"""
-        try:
-            response = requests.get(download_url, stream=True, timeout=30.0) # 실제 파일 다운로드는 0.5초 이상 소요되므로 30초 예외 허용
-            response.raise_for_status()
-            with open(save_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-            return True
-        except Exception as e:
-            logger.error(f"공통 다운로드 패치 실패: {e}")
-            return False
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(download_url, stream=True, timeout=30.0) # 실제 파일 다운로드는 0.5초 이상 소요되므로 30초 예외 허용
+                response.raise_for_status()
+                with open(save_path, 'wb') as f:
+                    # chunk_size를 1MB로 늘려 SSL 오버헤드 및 MAC 오류 발생 가능성 감소
+                    for chunk in response.iter_content(chunk_size=1024*1024):
+                        if chunk:
+                            f.write(chunk)
+                return True
+            except Exception as e:
+                logger.error(f"공통 다운로드 패치 실패 (시도 {attempt+1}/{max_retries}): {e}")
+                time.sleep(2)
+        return False

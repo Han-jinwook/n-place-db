@@ -123,7 +123,7 @@ def main():
         "product_id": config.PRODUCT_ID,
         "version": config.CURRENT_VERSION,
         "download_url": github_download_url,
-        "release_notes": "⚡ UI 포커스 개선, 실행 파일 단일화 및 배너 노출 임시 조치 (v1.1.76)"
+        "release_notes": "⚡ 대용량 업데이트 다운로드 안정성 강화 (v1.1.77)"
     }).execute()
     
     print("Supabase DB record inserted.")
