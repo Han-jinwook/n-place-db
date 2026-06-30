@@ -59,6 +59,11 @@ class MainApp(ctk.CTk):
         self.crawler_process = None
         self.is_running = False
 
+        # 윈도우 강제 활성화 (작업표시줄 깜빡임 방지)
+        self.attributes("-topmost", True)
+        self.after(500, lambda: self.attributes("-topmost", False))
+        self.focus_force()
+
         # [NEW] Dismiss Splash Screen with a small delay for reliability
         self.after(1000, self.dismiss_splash)
 
@@ -663,6 +668,7 @@ if __name__ == "__main__":
                 
                 root = tk.Tk()
                 root.withdraw()
+                root.attributes("-topmost", True) # 팝업 최상단 강제 배치
                 latest_v = update_info.get("version")
                 note = update_info.get("release_notes", "새로운 버전이 출시되었습니다.")
                 ans = messagebox.askyesno("업데이트 알림", 

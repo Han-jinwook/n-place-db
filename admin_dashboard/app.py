@@ -1786,8 +1786,8 @@ with footer_col1:
         return []
 
     promos = fetch_promotions()
-    # Filter out promotions that advertise THIS exact product
-    filtered_promos = [p for p in promos if p.get("promote_product_id") != config.PRODUCT_ID]
+    # Filter out promotions that advertise THIS exact product (테스트를 위해 임시 주석 처리)
+    filtered_promos = [p for p in promos] # if p.get("promote_product_id") != config.PRODUCT_ID
 
     if filtered_promos:
         import datetime

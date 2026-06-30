@@ -54,6 +54,11 @@ class AuthWindow(ctk.CTk):
         
         self.configure(fg_color=self.bg_dark)
 
+        # 윈도우 강제 활성화 (작업표시줄 깜빡임 방지)
+        self.attributes("-topmost", True)
+        self.after(500, lambda: self.attributes("-topmost", False))
+        self.focus_force()
+
         # 1. Header Section
         self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.header_frame.pack(pady=(30, 10), padx=30, fill="x")
