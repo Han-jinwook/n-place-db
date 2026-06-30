@@ -1813,11 +1813,21 @@ with footer_col1:
                 </div>
             """, unsafe_allow_html=True)
 
+try:
+    import base64
+    import os
+    banner_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "cs-banner.png")
+    with open(banner_path, "rb") as f:
+        encoded_banner = base64.b64encode(f.read()).decode()
+    banner_src = f"data:image/png;base64,{encoded_banner}"
+except Exception:
+    banner_src = "https://3monster.netlify.app/banners/cs-banner.png"
+
 with footer_col2:
-    st.markdown("""
+    st.markdown(f"""
         <div style='text-align: right; margin-bottom: 20px;'>
             <a href='https://3monster.net/support' target='_blank' style='text-decoration: none;'>
-                <img src='https://3monster.netlify.app/banners/cs-banner.png' style='max-height: 50px; width: auto; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s;' onmouseover='this.style.transform="scale(1.02)"' onmouseout='this.style.transform="scale(1)"' alt='3Monster 고객센터'>
+                <img src='{banner_src}' style='max-height: 50px; width: auto; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s;' onmouseover='this.style.transform="scale(1.02)"' onmouseout='this.style.transform="scale(1)"' alt='3Monster 고객센터'>
             </a>
         </div>
     """, unsafe_allow_html=True)

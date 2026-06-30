@@ -69,7 +69,7 @@ class MonsterUpdater:
     def download_to(cls, download_url, save_path):
         """파일 다운로드 엔진 (대용량 패키지 스트리밍 다운로드 지원)"""
         try:
-            response = requests.get(download_url, stream=True, timeout=10.0) # 실제 파일 다운로드는 0.5초 이상 소요되므로 10초 예외 허용
+            response = requests.get(download_url, stream=True, timeout=30.0) # 실제 파일 다운로드는 0.5초 이상 소요되므로 30초 예외 허용
             response.raise_for_status()
             with open(save_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):

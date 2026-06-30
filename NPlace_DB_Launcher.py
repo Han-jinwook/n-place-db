@@ -685,7 +685,23 @@ if __name__ == "__main__":
 
                     url = update_info.get("download_url")
                     temp_zip = "monster_update.zip"
-                    if MonsterUpdater.download_update(url, temp_zip):
+                    
+                    import threading
+                    import time
+                    download_result = []
+                    
+                    def download_task():
+                        res = MonsterUpdater.download_update(url, temp_zip)
+                        download_result.append(res)
+                        
+                    t = threading.Thread(target=download_task, daemon=True)
+                    t.start()
+                    
+                    while t.is_alive():
+                        progress_win.update()
+                        time.sleep(0.05)
+                        
+                    if download_result and download_result[0]:
                         MonsterUpdater.apply_update_and_restart(temp_zip)
                         sys.exit(0)
                     else:

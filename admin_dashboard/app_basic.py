@@ -1330,9 +1330,57 @@ elif page == 'Guide':
         </div>
     """, unsafe_allow_html=True)
 
-# [NEW] Persistent Footer Customer Support Link
+# [NEW] Persistent Footer with Cross-selling Banner & Customer Support Link
 st.markdown("<br><br>", unsafe_allow_html=True)
-footer_col1, footer_col2 = st.columns([4.2, 1])
+footer_col1, footer_col2 = st.columns([7, 3])
+
+with footer_col1:
+    import requests
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def fetch_promotions():
+        try:
+            url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/promotions?is_active=eq.true"
+            headers = {
+                "apikey": config.SUPABASE_KEY,
+                "Authorization": f"Bearer {config.SUPABASE_KEY}"
+            }
+            res = requests.get(url, headers=headers, timeout=2.0)
+            if res.status_code == 200:
+                data = res.json()
+                if data and len(data) > 0:
+                    return data
+        except Exception:
+            pass
+        return []
+
+    promos = fetch_promotions()
+    # Filter out promotions that advertise THIS exact product
+    filtered_promos = [p for p in promos if p.get("promote_product_id") != config.PRODUCT_ID]
+
+    if filtered_promos:
+        import datetime
+        current_hour = datetime.datetime.now().hour
+        promo = filtered_promos[current_hour % len(filtered_promos)]
+        image_url = promo.get("image_url")
+        if image_url:
+            st.markdown(f"""
+                <div style='text-align: left; margin-bottom: 20px;'>
+                    <a href='{promo.get("url", "#")}' target='_blank' style='text-decoration: none;'>
+                        <img src='{image_url}' style='max-height: 50px; width: auto; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s;' onmouseover='this.style.transform="scale(1.02)"' onmouseout='this.style.transform="scale(1)"'>
+                    </a>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+                <div style='text-align: left; margin-bottom: 20px;'>
+                    <a href='{promo.get("url", "#")}' target='_blank' style='text-decoration: none;'>
+                        <span style='background: linear-gradient(90deg, #F8FAFC 0%, #F1F5F9 100%); color: #334155; font-size: 0.85rem; font-weight: 700; border: 1px solid #E2E8F0; padding: 6px 14px; border-radius: 8px; display: inline-block; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);'>
+                            {promo.get("title", "")}
+                        </span>
+                    </a>
+                </div>
+            """, unsafe_allow_html=True)
+
 with footer_col2:
     st.markdown("""
         <div style='text-align: right; margin-bottom: 20px;'>
