@@ -98,12 +98,12 @@ def main():
 
     # Zip and Upload PRO
     zip_pro = f"NPlace-DB-Pro.zip"
-    folder_pro = f"NPlace-DB-PRO-v{config.CURRENT_VERSION}"
+    folder_pro = f"NPlace-DB-PRO"
     success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL
     zip_trial = f"NPlace-DB-Trial.zip"
-    folder_trial = f"NPlace-DB-TRIAL-v{config.CURRENT_VERSION}"
+    folder_trial = f"NPlace-DB-TRIAL"
     success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
@@ -123,7 +123,7 @@ def main():
         "product_id": config.PRODUCT_ID,
         "version": config.CURRENT_VERSION,
         "download_url": github_download_url,
-        "release_notes": "⚡ 대용량 업데이트 다운로드 안정성 강화 (v1.1.77)"
+        "release_notes": "⚡ 업데이터 호환성 및 실행 안정성 개선 (v1.1.78)"
     }).execute()
     
     print("Supabase DB record inserted.")

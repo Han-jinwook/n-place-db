@@ -56,15 +56,6 @@ def build_version(v, build_type):
     # Execute Build
     try:
         PyInstaller.__main__.run(args)
-        
-        # Rename dist folder to include version for deploy_ota.py
-        dist_folder = os.path.join("dist", exe_name)
-        new_dist_folder = os.path.join("dist", f"{exe_name}-v{v}")
-        if os.path.exists(new_dist_folder):
-            shutil.rmtree(new_dist_folder, ignore_errors=True)
-        if os.path.exists(dist_folder):
-            os.rename(dist_folder, new_dist_folder)
-            
         print(f"\n[{build_type} Build] PyInstaller compilation completed successfully!")
     except Exception as e:
         print(f"\n[{build_type} Build] Failed: {e}")
