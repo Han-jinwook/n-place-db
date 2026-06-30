@@ -85,24 +85,26 @@ class MonsterUpdater:
             # 배치 파일 경로
             bat_path = os.path.join(app_dir, "monster_update_helper.bat")
             
-            # 새 실행 파일 이름 (현재 빌드 타입에 맞춰 실행 파일 이름 추론)
-            build_type = getattr(config, 'BUILD_TYPE', 'PRO')
-            v = config.CURRENT_VERSION
-            
-            # 압축 해제 후 생성될 디렉토리 이름 예측
-            extracted_folder = f"NPlace-DB-{build_type}-v{v}"
-            extracted_exe_name = f"NPlace-DB-{build_type}-v{v}.exe"
-            
-            # 압축을 풀면 디렉토리 안에 exe가 있으므로
-            new_exe = os.path.join(app_dir, extracted_folder, extracted_exe_name)
+            extracted_folder = None
+            extracted_exe_name = None
             
             # ZIP 압축 해제 처리 (압축된 배포일 경우)
             if update_package_path.endswith('.zip'):
                 import zipfile
                 logger.info("📦 압축 해제 중...")
                 with zipfile.ZipFile(update_package_path, 'r') as zip_ref:
+                    # zip 파일 내부의 최상위 폴더 이름 동적 탐지
+                    top_levels = set([name.split('/')[0] for name in zip_ref.namelist() if '/' in name])
+                    if top_levels:
+                        extracted_folder = list(top_levels)[0]
+                        extracted_exe_name = f"{extracted_folder}.exe"
+                    
                     zip_ref.extractall(app_dir)
                 os.remove(update_package_path)
+            
+            if not extracted_folder or not extracted_exe_name:
+                logger.error("업데이트 패키지 내 구조를 분석할 수 없습니다.")
+                return False
             
             # 배치 파일 내용 생성 (기존 폴더/파일 백업 후 통째로 이동)
             bat_content = f"""@echo off
