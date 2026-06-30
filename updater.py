@@ -104,13 +104,15 @@ class MonsterUpdater:
                     zip_ref.extractall(app_dir)
                 os.remove(update_package_path)
             
-            # 배치 파일 내용 생성 (폴더 내 exe를 복사해오고 폴더 지움)
+            # 배치 파일 내용 생성 (기존 폴더/파일 백업 후 통째로 이동)
             bat_content = f"""@echo off
-timeout /t 2 /nobreak > nul
-if exist "{current_exe}" del /f /q "{current_exe}"
-if exist "{new_exe}" move /y "{new_exe}" "{current_exe}"
-if exist "{os.path.join(app_dir, extracted_folder)}" rmdir /s /q "{os.path.join(app_dir, extracted_folder)}"
-start "" "{current_exe}"
+timeout /t 3 /nobreak > nul
+taskkill /f /im "{os.path.basename(current_exe)}" > nul 2>&1
+timeout /t 1 /nobreak > nul
+
+xcopy /E /Y /C /Q "{os.path.join(app_dir, extracted_folder, '*')}" "{app_dir}\\"
+rmdir /s /q "{os.path.join(app_dir, extracted_folder)}"
+start "" "{os.path.join(app_dir, extracted_exe_name)}"
 del "%~f0"
 """
             with open(bat_path, "w", encoding="cp949") as f:
