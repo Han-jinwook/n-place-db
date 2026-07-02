@@ -173,16 +173,20 @@ class SupabaseAuthManager:
             with open(settings_file, "w", encoding="utf-8") as f:
                 json.dump({"used_count": new_count}, f)
                 
-            # Supabase 업데이트
-            update_url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?hwid=eq.{hwid}"
-            payload = {"used_count": new_count}
+            # Supabase 업데이트 (Upsert로 변경하여 최초 누락 시에도 강제 등록)
+            update_url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs"
+            payload = {
+                "hwid": hwid,
+                "status": "active",
+                "used_count": new_count
+            }
             headers = {
                 "apikey": config.SUPABASE_KEY,
                 "Authorization": f"Bearer {config.SUPABASE_KEY}",
                 "Content-Type": "application/json",
-                "Prefer": "return=minimal"
+                "Prefer": "resolution=merge-duplicates"
             }
-            requests.patch(update_url, headers=headers, json=payload, timeout=2.0)
+            requests.post(update_url, headers=headers, json=payload, timeout=2.0)
         except Exception as e:
             logger.error(f"체험판 수집량 업데이트 실패: {e}")
             
@@ -224,7 +228,7 @@ class SupabaseAuthManager:
                     "hwid": hwid,
                     "status": "active"
                 }
-                requests.post(url, headers=headers, json=payload, timeout=0.5)
+                requests.post(url, headers=headers, json=payload, timeout=2.0)
             except Exception as e:
                 logger.error(f"서버 체험판 기록 실패: {e}")
 
