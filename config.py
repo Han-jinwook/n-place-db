@@ -10,8 +10,8 @@ except ImportError:
 # [카페 몬스터] 통합 브랜드 및 기술 규격 적용
 
 PRODUCT_ID = "NPlace-DB"
-CURRENT_VERSION = "1.1.80"
-BUILD_TYPE = "TRIAL"  # "PRO" or "TRIAL"
+CURRENT_VERSION = "1.1.81"
+BUILD_TYPE = "PRO"  # "PRO" or "TRIAL"
 
 # [PRO] Determine dynamic base path: Executable dir if frozen, else project root
 import sys

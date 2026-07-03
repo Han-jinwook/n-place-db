@@ -174,11 +174,12 @@ class SupabaseAuthManager:
                 json.dump({"used_count": new_count}, f)
                 
             # Supabase 업데이트 (Upsert로 변경하여 최초 누락 시에도 강제 등록)
-            update_url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs"
+            update_url = f"{config.SUPABASE_URL.rstrip('/')}/rest/v1/trial_logs?on_conflict=hwid"
             payload = {
                 "hwid": hwid,
                 "status": "active",
-                "used_count": new_count
+                "used_count": new_count,
+                "last_collected_at": datetime.utcnow().isoformat()
             }
             headers = {
                 "apikey": config.SUPABASE_KEY,
