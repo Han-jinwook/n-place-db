@@ -1591,9 +1591,30 @@ if st.session_state['active_page'] == 'Shop Search':
                     try: last_time = pd.to_datetime(df_search['updated_at']).max().strftime('%H:%M')
                     except: pass
                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 수집</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
+            
+            st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+            if st.button("🧹 통계 초기화 후 작업하기", use_container_width=True, disabled=(pid is not None)):
+                try:
+                    if os.path.exists(config.LOCAL_DB_PATH):
+                        os.remove(config.LOCAL_DB_PATH)
+                    if os.path.exists(config.PROGRESS_FILE):
+                        os.remove(config.PROGRESS_FILE)
+                    st.success("데이터가 안전하게 저장 폴더에 남아있으며, 현재 화면의 통계만 초기화되었습니다.")
+                    time.sleep(1.5)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"초기화 중 오류가 발생했습니다: {e}")
     # --- 2. Live Monitoring Section ---
     st.markdown('<div class="section-title" style="margin-top:1rem;">📊 실시간 수집 상세 현황</div>', unsafe_allow_html=True)
     prog = get_crawler_progress() or {}
+    
+    # [NEW] 실시간 체험판 수집량 서버 동기화
+    if AuthManager.get_serial_key() == "TRIAL-MODE":
+        session_saved = prog.get("success_count", 0)
+        if session_saved > st.session_state.get('last_session_saved', -1):
+            st.session_state['last_session_saved'] = session_saved
+            import threading
+            threading.Thread(target=AuthManager.record_session_progress, args=(session_saved,), daemon=True).start()
     
     # [NEW] Track engine state transition
     if pid: st.session_state['engine_active_last'] = True
