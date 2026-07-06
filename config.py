@@ -11,7 +11,7 @@ except ImportError:
 
 PRODUCT_ID = "NPlace-DB"
 CURRENT_VERSION = "1.1.81"
-BUILD_TYPE = "PRO"  # "PRO" or "TRIAL"
+BUILD_TYPE = "TRIAL"  # "PRO" or "TRIAL"
 
 # [PRO] Determine dynamic base path: Executable dir if frozen, else project root
 import sys
