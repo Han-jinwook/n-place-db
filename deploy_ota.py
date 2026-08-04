@@ -107,11 +107,16 @@ def main():
     zip_pro = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
     folder_pro = f"Map_DB-PRO"
     success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
+    # Also upload static names for old/showroom links compatibility
+    zip_and_upload(folder_pro, "Map_DB-Pro.zip", github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL
     zip_trial = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
     folder_trial = f"Map_DB-TRIAL"
     success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
+    # Also upload static names for old/showroom links compatibility
+    zip_and_upload(folder_trial, "Map_DB-Trial.zip", github_pat, upload_url, headers)
+    zip_and_upload(folder_trial, "NPlace-DB-Trial.zip", github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
         print("[ERROR] Failed to find distribution folders. Did you run build_exe.py?")
