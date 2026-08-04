@@ -49,20 +49,22 @@ class MonsterUpdater:
             return None
 
     @classmethod
-    def download_update(cls, download_url, target_filename="update_package.zip"):
+    def download_update(cls, download_url, target_filename="monster_update.zip"):
         """[브릿지 구현] 공통 라이브러리 스트리밍 다운로드 연동"""
         try:
-            # BUILD_TYPE에 따라 URL 및 타겟 파일명 조정
+            import re
             build_type = getattr(config, 'BUILD_TYPE', 'PRO')
             
-            # download_url 은 보통 .../NPlace-DB-Pro.zip 형식으로 DB에 등록됨.
-            # 만약 앱이 TRIAL 빌드라면, Pro.zip 을 Trial.zip 으로 변경해서 다운로드.
-            if build_type == "TRIAL" and "Pro.zip" in download_url:
-                download_url = download_url.replace("Pro.zip", "Trial.zip")
-            elif build_type == "PRO" and "Trial.zip" in download_url:
-                download_url = download_url.replace("Trial.zip", "Pro.zip")
+            # 만약 앱이 TRIAL 빌드라면, -Pro를 -Trial로 변경해서 다운로드.
+            if build_type == "TRIAL":
+                download_url = re.sub(r'-Pro', '-Trial', download_url, flags=re.IGNORECASE)
+            elif build_type == "PRO":
+                download_url = re.sub(r'-Trial', '-Pro', download_url, flags=re.IGNORECASE)
                 
-            logger.info(f"📥 업데이트 다운로드 시작: {download_url}")
+            if not os.path.isabs(target_filename):
+                target_filename = os.path.join(config.LOCAL_BASE_PATH, target_filename)
+
+            logger.info(f"📥 업데이트 다운로드 시작: {download_url} -> {target_filename}")
             success = CommonUpdater.download_to(download_url, target_filename)
             if success:
                 logger.info(f"✅ 다운로드 완료: {target_filename}")
@@ -108,14 +110,16 @@ class MonsterUpdater:
             
             # 배치 파일 내용 생성 (기존 폴더/파일 백업 후 통째로 이동)
             bat_content = f"""@echo off
-timeout /t 3 /nobreak > nul
+timeout /t 2 /nobreak > nul
 taskkill /f /im "{os.path.basename(current_exe)}" > nul 2>&1
+taskkill /f /im "NPlace-DB-*.exe" > nul 2>&1
+taskkill /f /im "Map_DB-*.exe" > nul 2>&1
 timeout /t 1 /nobreak > nul
 
+if exist "{app_dir}\\_internal" rmdir /s /q "{app_dir}\\_internal"
 xcopy /E /Y /C /Q "{os.path.join(app_dir, extracted_folder, '*')}" "{app_dir}\\"
 rmdir /s /q "{os.path.join(app_dir, extracted_folder)}"
-del /q "{app_dir}\\NPlace-DB-TRIAL-v*.exe" 2>nul
-del /q "{app_dir}\\NPlace-DB-PRO-v*.exe" 2>nul
+del /q "{app_dir}\\NPlace-DB-*.exe" 2>nul
 start "" "{os.path.join(app_dir, extracted_exe_name)}"
 del "%~f0"
 """

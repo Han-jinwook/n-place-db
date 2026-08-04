@@ -26,14 +26,21 @@ def zip_and_upload(dist_folder_name, zip_filename, github_pat, upload_url, heade
     print(f"Compression complete. File size: {os.path.getsize(zip_filepath) / (1024*1024):.2f} MB")
 
     print(f"Uploading {zip_filename} to GitHub Release...")
-    with open(zip_filepath, "rb") as f:
-        upload_headers = headers.copy()
-        upload_headers["Content-Type"] = "application/zip"
-        res_upload = requests.post(f"{upload_url}?name={zip_filename}", data=f, headers=upload_headers)
-        res_upload.raise_for_status()
-        
-    print(f"Upload complete for {zip_filename}")
-    return True
+    upload_headers = headers.copy()
+    upload_headers["Content-Type"] = "application/zip"
+    
+    import time
+    for attempt in range(3):
+        try:
+            with open(zip_filepath, "rb") as f:
+                res_upload = requests.post(f"{upload_url}?name={zip_filename}", data=f, headers=upload_headers, timeout=120.0)
+                res_upload.raise_for_status()
+            print(f"Upload complete for {zip_filename}")
+            return True
+        except Exception as e:
+            print(f"Upload attempt {attempt+1} failed: {e}")
+            time.sleep(3)
+    return False
 
 def main():
     print(f"[OTA Deployer] Starting DUAL OTA Deployment (GitHub + Supabase) for {config.PRODUCT_ID} v{config.CURRENT_VERSION}...")
@@ -89,7 +96,7 @@ def main():
         
         # Check if assets already exist and delete them to overwrite
         for asset in release_data.get("assets", []):
-            if "NPlace-DB" in asset["name"]:
+            if "Map_DB" in asset["name"] or "NPlace-DB" in asset["name"]:
                 print(f"Deleting existing asset {asset['name']}...")
                 requests.delete(asset["url"], headers=headers)
     else:
@@ -97,13 +104,13 @@ def main():
         sys.exit(1)
 
     # Zip and Upload PRO
-    zip_pro = f"NPlace-DB-Pro.zip"
-    folder_pro = f"NPlace-DB-PRO"
+    zip_pro = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
+    folder_pro = f"Map_DB-PRO"
     success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL
-    zip_trial = f"NPlace-DB-Trial.zip"
-    folder_trial = f"NPlace-DB-TRIAL"
+    zip_trial = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
+    folder_trial = f"Map_DB-TRIAL"
     success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
@@ -119,14 +126,15 @@ def main():
     # Base URL using the PRO version. updater.py will modify this if it's a TRIAL build
     github_download_url = f"https://github.com/{github_repo}/releases/download/{tag_name}/{zip_pro}"
     
-    data, count = supabase.table("app_versions").upsert({
-        "product_id": config.PRODUCT_ID,
-        "version": config.CURRENT_VERSION,
-        "download_url": github_download_url,
-        "release_notes": "⚡ 대시보드 통계 초기화 버튼 추가 및 체험판 사용량 실시간 동기화 복구 (v1.1.80)"
-    }).execute()
+    for p_id in [config.PRODUCT_ID, "NPlace-DB"]:
+        supabase.table("app_versions").upsert({
+            "product_id": p_id,
+            "version": config.CURRENT_VERSION,
+            "download_url": github_download_url,
+            "release_notes": f"⚡ {config.SERVICE_NAME_KR} Map_DB Pro 업그레이드 및 기능 개선 (v{config.CURRENT_VERSION})"
+        }).execute()
     
-    print("Supabase DB record inserted.")
+    print("Supabase DB records inserted.")
     print("OTA Deployment Pipeline finished successfully!")
 
 if __name__ == "__main__":
