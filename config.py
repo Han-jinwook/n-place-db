@@ -7,11 +7,10 @@ except ImportError:
     # On Streamlit Cloud, variables are managed via Secrets, so dotenv is optional
     pass
 
-# [카페 몬스터] 통합 브랜드 및 기술 규격 적용
-
-PRODUCT_ID = "NPlace-DB"
-CURRENT_VERSION = "1.1.81"
-BUILD_TYPE = "TRIAL"  # "PRO" or "TRIAL"
+# [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
+PRODUCT_ID = "Map_DB"
+CURRENT_VERSION = "1.1.93"
+BUILD_TYPE = "PRO"  # "PRO" or "TRIAL"
 
 # [PRO] Determine dynamic base path: Executable dir if frozen, else project root
 import sys
@@ -22,12 +21,12 @@ else:
 
 # [NEW] Persistent User Settings & License Path (Windows Roaming AppData)
 if sys.platform == "win32":
-    USER_SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "NPlace-DB")
+    USER_SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "Map_DB")
 else:
-    USER_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".config", "MarketingMonster", "NPlace-DB")
+    USER_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".config", "MarketingMonster", "Map_DB")
 
 # [NEW] Persistent User Data Path (Zero-maintenance Data Policy - My Documents)
-USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
+USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "Map_DB")
 
 # Centralized Persistent Paths
 ARCHIVE_DB_PATH = os.path.join(USER_DATA_PATH, "DB")
@@ -41,14 +40,6 @@ os.makedirs(USER_SETTINGS_PATH, exist_ok=True)
 
 # Active session files (These will be archived on next run)
 LOCAL_DB_PATH = os.path.join(USER_DATA_PATH, f"{PRODUCT_ID}.sqlite")
-
-# [MIGRATION] Rename old database.sqlite to NPlace-DB.sqlite if it exists
-_old_generic_db = os.path.join(USER_DATA_PATH, "database.sqlite")
-if os.path.exists(_old_generic_db) and not os.path.exists(LOCAL_DB_PATH):
-    try:
-        import shutil
-        shutil.move(_old_generic_db, LOCAL_DB_PATH)
-    except: pass
 
 PROGRESS_FILE = os.path.join(LOCAL_LOG_PATH, "progress.json")
 ENGINE_LOG_FILE = os.path.join(LOCAL_LOG_PATH, "app.log")
@@ -83,40 +74,56 @@ if os.path.exists(old_lic) and not os.path.exists(new_lic):
 migration_marker = os.path.join(USER_DATA_PATH, ".migration_done")
 old_data_dir = os.path.join(LOCAL_BASE_PATH, "data")
 
-if not os.path.exists(migration_marker) and os.path.exists(old_data_dir):
-    # database.sqlite
-    old_db = os.path.join(old_data_dir, "database.sqlite")
-    if os.path.exists(old_db) and not os.path.exists(LOCAL_DB_PATH):
-        try:
-            shutil.copy2(old_db, LOCAL_DB_PATH)
-        except: pass
-    
-    # settings & templates
-    for filename in ["templates.json", "user_settings.json"]:
-        old_file = os.path.join(old_data_dir, filename)
-        new_file = os.path.join(USER_SETTINGS_PATH, filename)
-        if os.path.exists(old_file) and not os.path.exists(new_file):
+if not os.path.exists(migration_marker):
+    # 1. Portable data migration if exists
+    if os.path.exists(old_data_dir):
+        old_db = os.path.join(old_data_dir, "database.sqlite")
+        if os.path.exists(old_db) and not os.path.exists(LOCAL_DB_PATH):
             try:
-                shutil.copy2(old_file, new_file)
+                shutil.copy2(old_db, LOCAL_DB_PATH)
+            except: pass
+        
+        # settings & templates
+        for filename in ["templates.json", "user_settings.json"]:
+            old_file = os.path.join(old_data_dir, filename)
+            new_file = os.path.join(USER_SETTINGS_PATH, filename)
+            if os.path.exists(old_file) and not os.path.exists(new_file):
+                try:
+                    shutil.copy2(old_file, new_file)
+                except: pass
+
+        # license.dat
+        old_lfile = os.path.join(old_data_dir, "license.dat")
+        if os.path.exists(old_lfile) and not os.path.exists(new_lic):
+            try:
+                shutil.copy2(old_lfile, new_lic)
             except: pass
 
-    # license.dat
-    old_lfile = os.path.join(old_data_dir, "license.dat")
-    if os.path.exists(old_lfile) and not os.path.exists(new_lic):
+    # 2. Migrate from old persistent directory (NPlace-DB -> Map_DB)
+    old_nplace_dir = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
+    if os.path.exists(old_nplace_dir) and not os.path.exists(LOCAL_DB_PATH):
         try:
-            shutil.copy2(old_lfile, new_lic)
-        except: pass
-    
+            old_nplace_db = os.path.join(old_nplace_dir, "NPlace-DB.sqlite")
+            if os.path.exists(old_nplace_db):
+                shutil.copy2(old_nplace_db, LOCAL_DB_PATH)
+            else:
+                # If deleted (e.g. by reset tool), fallback to the latest backup from old DB directory
+                import glob
+                backups = glob.glob(os.path.join(old_nplace_dir, "DB", "db_*.sqlite"))
+                if backups:
+                    latest_backup = max(backups, key=os.path.getmtime)
+                    shutil.copy2(latest_backup, LOCAL_DB_PATH)
+        except Exception as e:
+            pass
+
     # Always create marker even if no files were found, to prevent future checks
     try:
         with open(migration_marker, "w") as f: f.write("done")
     except: pass
 
-
-
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
-BRAND_NAME_KR = "NPlace_DB"
-SERVICE_NAME_KR = "NPlace-DB (네이버 플레이스 수집)"
+BRAND_NAME_KR = "Map_DB"
+SERVICE_NAME_KR = f"Map_DB {'Trial' if BUILD_TYPE == 'TRIAL' else 'Pro'} (지도 데이터 수집)"
 
 # EXCLUSION SETTINGS
 DEFAULT_EXCLUDED_KEYWORDS = []

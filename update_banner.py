@@ -12,7 +12,7 @@ supabase.table('promotions').update({
     'title': '🚀 NPlace-DB 압도적인 마케팅 DB 추출 솔루션!',
     'promote_product_id': 'NPlace-DB',
     'is_active': True,
-    'url': 'https://3monster.netlify.app/'
+    'url': 'https://3monster.net/'
 }).eq('id', 'f3bfaffa-15f9-4e45-bfd8-598a4d3d0223').execute()
 
 print("Banners updated!")

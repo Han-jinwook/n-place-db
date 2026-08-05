@@ -6,6 +6,9 @@ os.environ["GRPC_ENABLE_FORK_SUPPORT"] = "0"
 os.environ["GRPC_POLL_STRATEGY"] = "poll"
 
 import streamlit as st
+import mimetypes
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
 import pandas as pd
 import requests
 import sys
@@ -79,9 +82,9 @@ def run_engine_cmd(target=None, count=None, mode="new"): # mode: "new", "resume"
         else:
              # [MODIFIED] Enforce License Collection Limit
              requested_count = int(count) if count else 99999
-             license_limit = AuthManager.get_collection_limit()
+             license_limit = AuthManager.get_remaining_collection_limit()
              
-             if license_limit:
+             if license_limit is not None:
                  run_count = str(min(requested_count, license_limit))
                  logger.info(f"🛡️ License Limit Applied: {run_count} (Requested: {requested_count})")
              else:
@@ -1310,7 +1313,7 @@ elif page == 'Guide':
     
     st.link_button(
         "🌐 웹 사용자 가이드 보러가기", 
-        "https://3monster.netlify.app/docs/nplace-db",
+        "https://3monster.net/docs/nplace-db",
         use_container_width=True
     )
     

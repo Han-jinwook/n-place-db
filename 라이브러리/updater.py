@@ -70,17 +70,27 @@ class MonsterUpdater:
         """파일 다운로드 엔진 (대용량 패키지 스트리밍 다운로드 지원)"""
         import time
         max_retries = 3
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        abs_save_path = os.path.abspath(save_path)
+        os.makedirs(os.path.dirname(abs_save_path), exist_ok=True)
+
         for attempt in range(max_retries):
             try:
-                response = requests.get(download_url, stream=True, timeout=30.0) # 실제 파일 다운로드는 0.5초 이상 소요되므로 30초 예외 허용
+                logger.info(f"📥 다운로드 시도 ({attempt+1}/{max_retries}): {download_url}")
+                response = requests.get(download_url, headers=headers, stream=True, timeout=60.0)
                 response.raise_for_status()
-                with open(save_path, 'wb') as f:
-                    # chunk_size를 1MB로 늘려 SSL 오버헤드 및 MAC 오류 발생 가능성 감소
+                with open(abs_save_path, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=1024*1024):
                         if chunk:
                             f.write(chunk)
+                logger.info(f"✅ 다운로드 성공: {abs_save_path}")
                 return True
             except Exception as e:
                 logger.error(f"공통 다운로드 패치 실패 (시도 {attempt+1}/{max_retries}): {e}")
+                if os.path.exists(abs_save_path):
+                    try: os.remove(abs_save_path)
+                    except: pass
                 time.sleep(2)
         return False

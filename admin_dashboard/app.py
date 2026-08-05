@@ -24,6 +24,9 @@ if getattr(sys, 'frozen', False):
     except: pass
 
 import streamlit as st
+import mimetypes
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
 import importlib
 
 # Ensure parent directory is in path to import config
@@ -294,19 +297,15 @@ def stop_engine():
         except: pass
     return False
 
-def run_engine_cmd(target, limit, keyword="", filter_mode="all", filter_keyword=""):
+def run_engine_cmd(target, limit, keyword="", filter_mode="all", filter_keyword="", trial_baseline=None):
     is_frozen = getattr(sys, 'frozen', False)
     
     if is_frozen:
-        # [FIX] In frozen (exe) mode, the exe itself acts as the Python launcher.
-        # The launcher's __main__ block handles argv like 'step1_refined_crawler.py'
-        # by running it via runpy.run_path from _internal folder.
         exe_path = sys.executable
         script_name = "step1_refined_crawler.py"
         cmd = [exe_path, script_name, target, str(limit), keyword]
-        cwd = os.path.dirname(exe_path)  # dist/NPlace-DB-v2/
+        cwd = os.path.dirname(exe_path)
     else:
-        # [DEV] In dev mode, call python interpreter directly
         base_dir = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.abspath(os.path.join(base_dir, '..', 'step1_refined_crawler.py'))
         cmd = [sys.executable, script_path, target, str(limit), keyword]
@@ -314,6 +313,9 @@ def run_engine_cmd(target, limit, keyword="", filter_mode="all", filter_keyword=
     
     if filter_mode != "all":
         cmd.extend(["--filter-mode", filter_mode, "--filter-keyword", filter_keyword])
+        
+    if trial_baseline is not None:
+        cmd.extend(["--trial-baseline", str(trial_baseline)])
     
     my_env = os.environ.copy()
     my_env["PYTHONIOENCODING"] = "utf-8"
@@ -620,7 +622,7 @@ with st.container():
                 <img src="data:image/png;base64,{logo_base64}" width="110" style="margin-bottom:5px;">
                 <div style="display:flex; flex-direction:column;">
                     <div style="display:flex; align-items:baseline; gap:8px;">
-                    <div style="font-size:2.0rem; font-weight:900; background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing:-1.5px; filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));">NPlace-DB</div>
+                    <div style="font-size:2.0rem; font-weight:900; background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing:-1.5px; filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));">Map_DB {"Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"}</div>
                     <div style="font-size:0.75rem; font-weight:700; color:#94A3B8; background:#F8FAFC; padding:1px 6px; border-radius:5px; border:1px solid #E2E8F0;">v{config.CURRENT_VERSION}</div>
                     </div>
                 </div>
@@ -742,7 +744,7 @@ def render_track(track_id, label, col_filter, cfg_name, df_in):
                 c1, c2 = st.columns(2)
                 if track_id == 'A':
                     new_id = c1.text_input("발송용 네이버 이메일 ID", placeholder="아이디만 입력해도 됩니다", help="예: 'chiu3' 만 입력하면 자동으로 'chiu3@naver.com'이 됩니다.", key="new_email_id_v2")
-                    new_pw = c2.text_input("🔑 비밀번호 (앱 암호)", type="password", help="네이버/Gmail은 반드시 '앱 암호'를 발급받아 입력해야 합니다.", key="new_email_pw_v2")
+                    new_pw = c2.text_input("🔑 비밀번호 (앱 암호)", type="password", help="네이버/Gmail은 반드시 '앱 암호'를 발급받아 입력해야 합니다.", key="new_email_pw_v2", autocomplete="current-password")
                     with c2:
                         st.caption("⚠️ **주의**: 일반 비밀번호가 아닌, 2단계 인증 설정 후 발급받은 **'앱 암호'**를 입력해 주세요.")
                     
@@ -1387,19 +1389,19 @@ if st.session_state['active_page'] == 'Shop Search':
             )
 
             st.markdown('<p class="input-label" style="margin-top:10px;">🚫 제외 키워드 (콤마 구분)</p>', unsafe_allow_html=True)
-            s_exclude = st.text_input("제외 키워드", placeholder="예: 태닝, 마사지", key="main_ex_v5", label_visibility="collapsed", on_change=_autosave_exclude)
+            s_exclude = st.text_input("제외 키워드", placeholder="예: 태닝, 마사지", key="main_ex_v5", label_visibility="collapsed")
             
             st.markdown('<p class="input-label" style="margin-top:10px;">🎯 2차 필터링 조건</p>', unsafe_allow_html=True)
             f_mode_opts = ["전체(상호/업종/메뉴 포함)", "상호명 일치", "업종명 일치"]
             saved_f_mode = u_set.get('filter_mode_ui', "전체(상호/업종/메뉴 포함)")
-            s_f_mode_ui = st.selectbox("필터 모드", f_mode_opts, key="main_f_mode_v5", label_visibility="collapsed", on_change=_autosave_filter_mode)
+            s_f_mode_ui = st.selectbox("필터 모드", f_mode_opts, key="main_f_mode_v5", label_visibility="collapsed")
             # [REMOVED] 필터 키워드 입력창 제거 (검색 키워드 자동 참조)
         
     with c2:
         with st.container(border=True):
             st.markdown('<p class="input-label">📍 지역 설정</p>', unsafe_allow_html=True)
             saved_provs = u_set.get('provinces', [])
-            s_provinces = st.multiselect("대상 시/도", config.REGIONS_LIST, key="main_prov_v5", label_visibility="collapsed", on_change=_autosave_provinces)
+            s_provinces = st.multiselect("대상 시/도", config.REGIONS_LIST, key="main_prov_v5", label_visibility="collapsed")
             
             s_target = ""
             if s_provinces:
@@ -1411,7 +1413,7 @@ if st.session_state['active_page'] == 'Shop Search':
                 saved_dists = u_set.get('districts', [])
                 s_dist_opts = sorted(all_districts)
                 s_dist_defaults = [d for d in saved_dists if d in s_dist_opts]
-                selected_dists = st.multiselect("상세 구역 선택 (정밀 수집)", options=s_dist_opts, key="main_dist_v5", on_change=_autosave_districts)
+                selected_dists = st.multiselect("상세 구역 선택 (정밀 수집)", options=s_dist_opts, key="main_dist_v5")
                 targets = []
                 dist_provinces = set()
                 for sd in selected_dists:
@@ -1475,33 +1477,28 @@ if st.session_state['active_page'] == 'Shop Search':
                             new_hist.append(s_keyword)
                             new_hist = new_hist[-10:]
                         
-                        # [NEW] Auto-Archiving logic: Save old session into DB/ before starting new one
-                        db_path = config.LOCAL_DB_PATH
-                        if os.path.exists(db_path):
-                            try:
-                                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                                archive_db = os.path.join(config.ARCHIVE_DB_PATH, f"db_{timestamp}.sqlite")
-                                os.rename(db_path, archive_db)
-                                # Also clear progress
-                                if os.path.exists(config.PROGRESS_FILE): os.remove(config.PROGRESS_FILE)
-                                if os.path.exists(config.ENGINE_LOG_FILE): os.remove(config.ENGINE_LOG_FILE)
-                            except Exception as e:
-                                st.warning(f"히스토리 백업 중 오류: {e}")
-                                
                         st.session_state['engine_starting'] = True
+                        if os.path.exists(config.PROGRESS_FILE):
+                            try: os.remove(config.PROGRESS_FILE)
+                            except: pass
                         save_settings({
                             'keyword': s_keyword, 'exclude': s_exclude, 'filter_mode_ui': s_f_mode_ui,
                             'filter_keyword': "", 'provinces': s_provinces, 'districts': selected_dists if s_provinces else [],
                             'kw_history': new_hist
                         })
-                        limit = AuthManager.get_collection_limit()
+                        # [NEW] 엔진 시작 전 반드시 최신 체험판 수집량을 서버와 동기화하여 무한 루프 꼼수 방지
+                        if AuthManager.get_serial_key() == "TRIAL-MODE":
+                            AuthManager.get_and_sync_trial_used_count()
+                            
+                        limit = AuthManager.get_remaining_collection_limit()
                         is_paid = AuthManager.check_license_status() and AuthManager.get_serial_key() != "TRIAL-MODE"
-                        final_limit = limit if limit else (99999 if is_paid else 50)
+                        final_limit = limit if limit is not None else (99999 if is_paid else 50)
                         filter_mode_map = {"전체(상호/업종/메뉴 포함)": "all", "상호명 일치": "name", "업종명 일치": "category"}
                         f_mode = filter_mode_map.get(s_f_mode_ui, "all")
                         st.session_state['completion_shown'] = False
-                        st.session_state['celebration_fired'] = False # [NEW] Reset celebration flag
-                        run_engine_cmd(s_target, final_limit, s_keyword, filter_mode=f_mode, filter_keyword=s_keyword)
+                        st.session_state['celebration_fired'] = False
+                        trial_baseline = AuthManager.get_and_sync_trial_used_count() if AuthManager.get_serial_key() == "TRIAL-MODE" else None
+                        run_engine_cmd(s_target, final_limit, s_keyword, filter_mode=f_mode, filter_keyword=s_keyword, trial_baseline=trial_baseline)
                         st.rerun()
                     else: st.warning("키워드와 지역을 설정해 주세요.")
 
@@ -1550,7 +1547,7 @@ if st.session_state['active_page'] == 'Shop Search':
                             file_path = MonsterExporter.get_export_filepath(
                                 custom_prefix=_prefix,
                                 extension="csv",
-                                product_id="nplace-db"
+                                product_id="map_db"
                             )
                             drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
                             df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
@@ -1593,28 +1590,28 @@ if st.session_state['active_page'] == 'Shop Search':
                 st.markdown(f"<div class='status-card' style='text-align:center;'><p class='input-label'>마지막 수집</p><h3 style='margin:0; font-size:1.1rem;'>{last_time}</h3></div>", unsafe_allow_html=True)
             
             st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-            if st.button("🧹 통계 초기화 후 작업하기", use_container_width=True, disabled=(pid is not None)):
+            if st.button("🗑️ 데이터 초기화", use_container_width=True, disabled=(pid is not None), help="수집된 기존 데이터(DB)를 백업 폴더로 옮기고 DB를 비웁니다."):
                 try:
                     if os.path.exists(config.LOCAL_DB_PATH):
-                        os.remove(config.LOCAL_DB_PATH)
+                        from datetime import datetime
+                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        os.makedirs(config.ARCHIVE_DB_PATH, exist_ok=True)
+                        archive_db = os.path.join(config.ARCHIVE_DB_PATH, f"db_{timestamp}.sqlite")
+                        import shutil
+                        shutil.move(config.LOCAL_DB_PATH, archive_db)
                     if os.path.exists(config.PROGRESS_FILE):
-                        os.remove(config.PROGRESS_FILE)
-                    st.success("데이터가 안전하게 저장 폴더에 남아있으며, 현재 화면의 통계만 초기화되었습니다.")
-                    time.sleep(1.5)
+                        try: os.remove(config.PROGRESS_FILE)
+                        except: pass
+                    st.success("기존 데이터가 백업 폴더로 이동되고 데이터가 초기화되었습니다.")
+                    time.sleep(1.2)
                     st.rerun()
                 except Exception as e:
-                    st.error(f"초기화 중 오류가 발생했습니다: {e}")
+                    st.error(f"데이터 초기화 오류: {e}")
+            
+
     # --- 2. Live Monitoring Section ---
     st.markdown('<div class="section-title" style="margin-top:1rem;">📊 실시간 수집 상세 현황</div>', unsafe_allow_html=True)
     prog = get_crawler_progress() or {}
-    
-    # [NEW] 실시간 체험판 수집량 서버 동기화
-    if AuthManager.get_serial_key() == "TRIAL-MODE":
-        session_saved = prog.get("success_count", 0)
-        if session_saved > st.session_state.get('last_session_saved', -1):
-            st.session_state['last_session_saved'] = session_saved
-            import threading
-            threading.Thread(target=AuthManager.record_session_progress, args=(session_saved,), daemon=True).start()
     
     # [NEW] Track engine state transition
     if pid: st.session_state['engine_active_last'] = True
@@ -1631,6 +1628,14 @@ if st.session_state['active_page'] == 'Shop Search':
     if is_completed and not st.session_state.get("completion_shown", False):
         # [NEW] Reset transition flag on completion
         st.session_state['engine_active_last'] = False
+        
+        # [NEW] Force final trial count sync to Supabase upon completion
+        if AuthManager.get_serial_key() == "TRIAL-MODE":
+            try:
+                AuthManager.get_and_sync_trial_used_count()
+            except Exception as e:
+                logger.error(f"Completion trial sync failed: {e}")
+
         # [NEW] Celebration fires only ONCE per collection session
         if not st.session_state.get("celebration_fired", False):
             st.balloons()
@@ -1748,7 +1753,7 @@ elif st.session_state['active_page'] == 'Track C':
     df_track_c = load_local_data()
     render_track('C', '인스타 DM 마케팅', '인스타', 'DM 서버', df_track_c)
 elif st.session_state['active_page'] == 'Guide':
-    st.markdown('<div class="section-title">📖 NPlace-DB 공식 가이드</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📖 Map_DB Pro 공식 가이드</div>', unsafe_allow_html=True)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     
@@ -1763,7 +1768,7 @@ elif st.session_state['active_page'] == 'Guide':
     
     st.link_button(
         "🌐 웹 사용자 가이드 보러가기", 
-        "https://3monster.netlify.app/docs/nplace-db",
+        "https://3monster.net/docs/nplace-db",
         use_container_width=True
     )
     
@@ -1842,7 +1847,7 @@ try:
         encoded_banner = base64.b64encode(f.read()).decode()
     banner_src = f"data:image/png;base64,{encoded_banner}"
 except Exception:
-    banner_src = "https://3monster.netlify.app/banners/cs-banner.png"
+    banner_src = "https://3monster.net/banners/cs-banner.png"
 
 with footer_col2:
     st.markdown(f"""

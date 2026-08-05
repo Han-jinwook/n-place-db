@@ -1,33 +1,54 @@
-# N-Place-DB 현재 직면한 문제점 및 해결 방안 명세 (일시 리셋용)
+# Map_DB 빌드 오류 현황 및 다음 세션 작업 가이드
 
-## 1. 자동 업데이트 로직의 치명적 결함 (기능 문제)
-- **증상**: 1.1.71 버전에서 1.1.72 버전으로 자동 업데이트를 시도할 때, "다운로드 중 오류가 발생했습니다." 라는 메시지와 함께 다운로드가 중단됨.
-- **원인 분석**:
-  1. `NPlace_DB_Launcher.py`의 시작 시 업데이트 확인 로직(`check_update` 함수)에서 업데이트 다운로드를 **메인 스레드(UI 스레드)에서 동기적으로 실행**하고 있음. 이로 인해 156MB짜리 대용량 파일을 받는 동안 프로그램 창이 완전히 응답 없음(Freezing) 상태에 빠짐.
-  2. `라이브러리/updater.py`의 `CommonUpdater.download_to` 함수 내에 설정된 `requests.get`의 `timeout=10.0` 값이 너무 짧거나, UI 스레드 멈춤 현상과 겹쳐서 OS 단에서 소켓 연결이 끊어지며 `ChunkedEncodingError` 또는 `ConnectionError`가 발생함.
-- **해결 방안 (기능 명세)**:
-  - 메인 스레드가 아닌 **별도의 백그라운드 스레드(Thread)**를 생성하여 다운로드를 처리하도록 로직 전면 수정.
-  - `requests.get`의 `timeout` 값을 대용량 파일에 맞게 넉넉하게 변경하거나 다운로드 재시도 로직 추가.
-  - 다운로드 진행률(%)을 사용자에게 명확히 보여주는 프로그레스 바(Progress Bar) 기능 추가 도입 필요.
+## 1. 현재 발생한 오류
+`Map_DB-TRIAL.exe` 또는 `PRO` 버전을 실행하면 다음과 같은 에러창이 팝업되며 실행이 중단됩니다.
+```text
+Failed to execute script 'NPlace_DB_Launcher' due to unhandled exception: No module named 'sb_auth_manager'
+Traceback (most recent call last):
+  File "NPlace_DB_Launcher.py", line 8, in <module>
+  File "pyimod02_importers.py", line 457, in exec_module
+  File "<frozen auth>", line 3, in <module>
+ModuleNotFoundError: No module named 'sb_auth_manager'
+```
 
-## 2. 하단 고객센터 배너 이미지 엑스박스(깨짐) 현상 (기능 문제)
-- **증상**: N-Place-DB 1.1.71 버전 하단에 고객센터 배너 이미지가 제대로 표시되지 않고 엑스박스(깨진 이미지 아이콘)로 나타남.
-- **원인 분석**:
-  - `app.py`에 적용된 이미지 URL `https://3monster.net/banners/cs-banner.png`는 정상적으로 200 OK 응답을 주지만, 
-  - PyQt의 `QWebEngineView` 내에서 Streamlit을 렌더링할 때, 외부 도메인(3monster.net)의 이미지를 불러오는 과정에서 **CORS (교차 출처 리소스 공유)** 정책 위반 또는 혼합 콘텐츠(Mixed Content, 보안 인증서 문제)로 인해 렌더링 엔진이 자체적으로 이미지 로딩을 차단하고 있음.
-- **해결 방안 (기능 명세)**:
-  - 외부 URL을 직접 HTML 태그에 박아넣는 대신, `cs-banner.png` 이미지를 **앱 내부 로컬 에셋(Local Asset)**으로 다운로드하여 폴더(`admin_dashboard/public` 또는 `assets`) 내에 포함시킨 후, Streamlit의 `st.image` 또는 로컬 경로를 참조하여 렌더링하도록 구조 변경.
+## 2. 오류 발생의 근본 원인 (Root Cause)
+이 문제는 **PyArmor(코드 난독화)와 PyInstaller(exe 패키징) 간의 동작 방식 차이** 때문에 발생했습니다.
 
----
+1. `NPlace_DB_Launcher.py`는 `auth.py`를 임포트합니다.
+2. `auth.py`는 내부에서 `sb_auth_manager.py`를 임포트하여 Supabase 인증을 처리합니다.
+3. 하지만 빌드 스크립트(`build_exe.py`)가 실행될 때, `auth.py`를 먼저 PyArmor로 암호화(난독화)해버립니다.
+4. 이후 PyInstaller가 exe로 패키징하기 위해 소스 코드들을 스캔하면서 어떤 모듈이 필요한지 추적하는데, **`auth.py`가 이미 난독화되어 외계어처럼 변해있으므로 그 안에 적혀있던 `import sb_auth_manager`라는 코드를 읽지 못합니다.**
+5. 결국 PyInstaller는 `sb_auth_manager`가 필요하다는 사실을 모른 채 exe 패키징을 완료해버리고, 실행 시 모듈이 없다는 에러가 발생하게 됩니다.
 
-## 🚀 다음 세션에서 진행할 기능 구현 우선순위 (UI 제외, 핵심 기능 위주)
+*(이전의 1170 에러(런타임 불일치)는 원본 복구로 완벽히 해결되었지만, 원본이 정상적으로 암호화되면서 PyInstaller의 의존성 추적을 피하게 된 새로운 사이드 이펙트입니다.)*
 
-1. **OTA 업데이트 다운로더 스레드 분리 및 안정화**
-   - 업데이트 다운로드가 UI를 멈추지 않게 백그라운드 스레드화.
-   - 대용량 파일 다운로드 끊김 방지(스트리밍 청크 안정화).
-2. **배너 리소스 로컬화**
-   - 웹뷰(QWebEngineView) 차단 문제를 우회하기 위해 배너 등 고정 리소스는 외부 URL 참조를 제거하고 로컬 패키징으로 변경.
-3. **업데이트 후 자동 재시작 로직 마감**
-   - 앞서 적용한 `xcopy` 기반의 원폴더 덮어쓰기 로직(`updater.py` 내 `bat_content`)이 스레드 분리 후 정상 동작하는지 최종 테스트.
+## 3. 다음 세션에서의 해결 방안 (Action Plan)
+해결 방법은 아주 간단하며 명확합니다. PyInstaller가 난독화된 코드 내부를 읽지 못하더라도 강제로 모듈을 포함시키도록 지시하면 됩니다.
 
-이 문서를 바탕으로 다음 세션에서 기능적 문제들을 하나씩 확실하게 해결해 나가겠습니다.
+**수정할 파일**: `build_exe.py`
+**수정 내용**: PyInstaller 빌드 옵션(`args`)에 `--hidden-import`를 추가하여 누락된 모듈들을 명시적으로 포함시킵니다.
+
+```python
+        args = [
+            'NPlace_DB_Launcher.py',
+            '--name', f'Map_DB-{build_type}',
+            '--windowed',
+            '--noconfirm',
+            '--clean',
+            f'--icon={icon_path}',
+            f'--add-data={pyarmor_runtime};{pyarmor_runtime}',
+            f'--hidden-import={pyarmor_runtime}',
+            
+            # --- [다음 세션 추가할 내용] ---
+            '--hidden-import=sb_auth_manager', # 난독화된 auth.py가 호출하는 모듈 강제 포함
+            '--hidden-import=config',          # 혹시 모를 누락 방지용 설정 파일 포함
+            # -------------------------------
+        ]
+```
+
+## 4. 요약
+* **상태**: 암호화 키 불일치 문제(1170 에러)는 100% 해결됨.
+* **현재 문제**: 난독화 때문에 PyInstaller가 일부 모듈 패키징을 빠뜨림.
+* **해결책**: `build_exe.py`에 `--hidden-import=sb_auth_manager` 한 줄만 추가하면 완벽하게 해결됨.
+
+다음 세션에서 이 문서를 기반으로 1분 안에 수정을 완료하고 최종 빌드를 뽑아내겠습니다!

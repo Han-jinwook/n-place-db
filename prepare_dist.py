@@ -99,6 +99,16 @@ def cleanup():
         except: pass
     print("  Cleaned: __pycache__")
     
+    # [NEW] Clear PyArmor Obfuscation Temp Folder
+    print("- Cleaning PyArmor temp folder...")
+    obf_dir = os.path.join(root_dir, "obf_dist")
+    if os.path.exists(obf_dir):
+        try:
+            shutil.rmtree(obf_dir)
+            print("  Cleaned: obf_dist/")
+        except Exception as e:
+            print(f"  Error cleaning obf_dist: {e}")
+    
     # 7. Package Compiled Folder in dist/
     dist_folder_name = f"NPlace-DB-v{v}"
     dist_final_dir = os.path.join(root_dir, "dist", dist_folder_name)

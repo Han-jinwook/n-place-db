@@ -10,7 +10,7 @@ def build_version(v, build_type, pyarmor_runtime):
     print(f"=========================================\n")
 
     # PyInstaller Arguments
-    exe_name = f"Map_DB-{build_type}-v{v}"
+    exe_name = f"Map_DB-{build_type}"
     args = [
         'NPlace_DB_Launcher.py',              
         f'--name={exe_name}',
@@ -58,6 +58,19 @@ def build_version(v, build_type, pyarmor_runtime):
     # Execute Build
     try:
         PyInstaller.__main__.run(args)
+        
+        # Rename the output folder from dist/Map_DB-{build_type} to dist/Map_DB-{build_type}-v{v}
+        src_dir = os.path.join("dist", exe_name)
+        dst_dir = os.path.join("dist", f"Map_DB-{build_type}-v{v}")
+        print(f"Renaming compiled directory {src_dir} to {dst_dir}...")
+        if os.path.exists(dst_dir):
+            shutil.rmtree(dst_dir, ignore_errors=True)
+        if os.path.exists(src_dir):
+            os.rename(src_dir, dst_dir)
+            print(f"Successfully renamed output folder to: {dst_dir}")
+        else:
+            print(f"[Warning] Compiled directory not found: {src_dir}")
+            
         print(f"\n[{build_type} Build] PyInstaller compilation completed successfully!")
     except Exception as e:
         print(f"\n[{build_type} Build] Failed: {e}")

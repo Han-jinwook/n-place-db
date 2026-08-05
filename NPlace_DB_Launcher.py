@@ -105,7 +105,7 @@ class MainApp(ctk.CTk):
         note = info.get("release_notes", "새로운 버전이 출시되었습니다.")
         
         if messagebox.askyesno("업데이트 알림", 
-                                f"새로운 버전({latest_v})이 발견되었습니다.\n\n"
+                                f"현재 설치된 버전은 v{config.CURRENT_VERSION} 인데, 최신 v{latest_v} 버전으로 업그레이드 하시겠습니까?\n\n"
                                 f"내용: {note}\n\n"
                                 f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 시작됩니다.)"):
             self.perform_update(info)
@@ -117,7 +117,7 @@ class MainApp(ctk.CTk):
         
         def download_and_apply():
             url = info.get("download_url")
-            temp_zip = "monster_update.zip"
+            temp_zip = os.path.join(config.LOCAL_BASE_PATH, "monster_update.zip")
             if MonsterUpdater.download_update(url, temp_zip):
                 self.after(0, lambda: MonsterUpdater.apply_update_and_restart(temp_zip))
             else:
@@ -672,7 +672,7 @@ if __name__ == "__main__":
                 latest_v = update_info.get("version")
                 note = update_info.get("release_notes", "새로운 버전이 출시되었습니다.")
                 ans = messagebox.askyesno("업데이트 알림", 
-                                        f"새로운 버전({latest_v})이 발견되었습니다.\n\n"
+                                        f"현재 설치된 버전은 v{config.CURRENT_VERSION} 인데, 최신 v{latest_v} 버전으로 업그레이드 하시겠습니까?\n\n"
                                         f"내용: {note}\n\n"
                                         f"지금 업데이트를 진행하시겠습니까?\n(확인을 누르면 자동 업데이트 후 시작됩니다.)", parent=root)
                 if ans:
@@ -690,7 +690,7 @@ if __name__ == "__main__":
                     progress_win.update()
 
                     url = update_info.get("download_url")
-                    temp_zip = "monster_update.zip"
+                    temp_zip = os.path.join(config.LOCAL_BASE_PATH, "monster_update.zip")
                     
                     import threading
                     import time
