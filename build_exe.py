@@ -4,13 +4,13 @@ import shutil
 import config
 import re
 
-def build_version(v, build_type):
+def build_version(v, build_type, pyarmor_runtime):
     print(f"\n=========================================")
     print(f"N-Place-DB Build Start (v{v} - {build_type})")
     print(f"=========================================\n")
 
     # PyInstaller Arguments
-    exe_name = f"NPlace-DB-{build_type}"
+    exe_name = f"Map_DB-{build_type}-v{v}"
     args = [
         'NPlace_DB_Launcher.py',              
         f'--name={exe_name}',
@@ -29,17 +29,19 @@ def build_version(v, build_type):
         '--add-data=assets;assets',
         '--add-data=config.py;.',
         '--add-data=admin_dashboard/templates.json;.',
-        '--add-data=step1_refined_crawler.py;.',
         '--add-data=engine_recover_missing.py;.',
-        '--add-data=auth.py;.',
         '--add-data=auth_gui.py;.',
-        '--add-data=sb_auth_manager.py;.',
         '--add-data=updater.py;.',
         '--add-data=exporter.py;.',
         '--add-data=main_launcher.py;.',
         '--add-data=라이브러리;라이브러리',
+        f'--add-data=step1_refined_crawler.py;.',
+        f'--add-data=auth.py;.',
+        f'--add-data={pyarmor_runtime};{pyarmor_runtime}',
+        f'--hidden-import={pyarmor_runtime}',
         '--collect-all=playwright_stealth',
         '--collect-all=streamlit_autorefresh',
+        '--hidden-import=sb_auth_manager',
         '--hidden-import=step1_refined_crawler',
         '--hidden-import=engine_recover_missing',
         '--hidden-import=streamlit.runtime.scriptrunner.magic_funcs',
@@ -79,24 +81,75 @@ def build_all():
     with open(config_path, 'r', encoding='utf-8') as f:
         original_config = f.read()
 
+    target_scripts = ["step1_refined_crawler.py", "auth.py", "sb_auth_manager.py"]
+    pyarmor_runtime = None
+
     try:
         # 1. Resilient Cleanup
         if os.path.exists("build"): shutil.rmtree("build", ignore_errors=True)
+        for root_dir, dirs, _ in os.walk("."):
+            for d in dirs:
+                if d == "__pycache__":
+                    shutil.rmtree(os.path.join(root_dir, d), ignore_errors=True)
         print("Cleanup done (including pycache).")
 
-        # 2. Build PRO version
-        modify_config_build_type(config_path, "PRO")
-        build_version(v, "PRO")
+        # 2. Run PyArmor Obfuscation ONCE for both builds
+        print("\n[Global] Running PyArmor Obfuscation...")
+        if os.path.exists("obf_dist"):
+            shutil.rmtree("obf_dist")
         
-        # 3. Build TRIAL version
+        os.system(f"pyarmor gen -O obf_dist {' '.join(target_scripts)}")
+        
+        for item in os.listdir("obf_dist"):
+            if item.startswith("pyarmor_runtime_"):
+                pyarmor_runtime = item
+                break
+
+        if not pyarmor_runtime:
+            print("[Error] PyArmor runtime not found. PyArmor might not be installed or failed.")
+            return
+
+        print("[Global] Backing up original scripts and applying obfuscated scripts...")
+        for script in target_scripts:
+            if os.path.exists(script):
+                shutil.copy2(script, script + ".bak")
+                shutil.copy2(os.path.join("obf_dist", script), script)
+                
+        if os.path.exists(pyarmor_runtime):
+            shutil.rmtree(pyarmor_runtime)
+        shutil.copytree(os.path.join("obf_dist", pyarmor_runtime), pyarmor_runtime)
+
+        # 3. Build PRO version
+        modify_config_build_type(config_path, "PRO")
+        build_version(v, "PRO", pyarmor_runtime)
+        
+        # 4. Build TRIAL version
         modify_config_build_type(config_path, "TRIAL")
-        build_version(v, "TRIAL")
+        build_version(v, "TRIAL", pyarmor_runtime)
 
     finally:
         # Restore original config.py
         with open(config_path, 'w', encoding='utf-8') as f:
             f.write(original_config)
-        print("\nRestored original config.py")
+        
+        # Restore original scripts
+        print("[Global] Restoring original scripts...")
+        for script in target_scripts:
+            if os.path.exists(script + ".bak"):
+                shutil.move(script + ".bak", script)
+                
+        # Clean up lingering pyarmor runtime and pycache from root to prevent script errors
+        for item in os.listdir("."):
+            if item.startswith("pyarmor_runtime_") and os.path.isdir(item):
+                shutil.rmtree(item, ignore_errors=True)
+        if os.path.exists("obf_dist"):
+            shutil.rmtree("obf_dist", ignore_errors=True)
+        for root_dir, dirs, _ in os.walk("."):
+            for d in dirs:
+                if d == "__pycache__":
+                    shutil.rmtree(os.path.join(root_dir, d), ignore_errors=True)
+                    
+        print("\nRestored original config.py & cleaned temporary files.")
 
 if __name__ == "__main__":
     build_all()

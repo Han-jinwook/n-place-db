@@ -104,12 +104,12 @@ def main():
 
     # Zip and Upload PRO
     zip_pro = "Map_DB-Pro.zip"
-    folder_pro = "Map_DB-PRO"
+    folder_pro = f"Map_DB-PRO-v{config.CURRENT_VERSION}"
     success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL
     zip_trial = "Map_DB-Trial.zip"
-    folder_trial = "Map_DB-TRIAL"
+    folder_trial = f"Map_DB-TRIAL-v{config.CURRENT_VERSION}"
     success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
