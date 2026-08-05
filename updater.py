@@ -55,11 +55,11 @@ class MonsterUpdater:
             import re
             build_type = getattr(config, 'BUILD_TYPE', 'PRO')
             
-            # 만약 앱이 TRIAL 빌드라면, -Pro를 -Trial로 변경해서 다운로드.
+            # 만약 앱이 TRIAL 빌드라면, Pro.zip을 Trial.zip으로 변경해서 다운로드.
             if build_type == "TRIAL":
-                download_url = re.sub(r'-Pro', '-Trial', download_url, flags=re.IGNORECASE)
+                download_url = download_url.replace("Pro.zip", "Trial.zip")
             elif build_type == "PRO":
-                download_url = re.sub(r'-Trial', '-Pro', download_url, flags=re.IGNORECASE)
+                download_url = download_url.replace("Trial.zip", "Pro.zip")
                 
             if not os.path.isabs(target_filename):
                 target_filename = os.path.join(config.LOCAL_BASE_PATH, target_filename)

@@ -20,8 +20,7 @@ def zip_and_upload(dist_folder_name, zip_filename, github_pat, upload_url, heade
     shutil.make_archive(
         base_name=os.path.join("dist", zip_filename.replace(".zip", "")),
         format='zip',
-        root_dir="dist",
-        base_dir=dist_folder_name
+        root_dir=dist_folder_path
     )
     print(f"Compression complete. File size: {os.path.getsize(zip_filepath) / (1024*1024):.2f} MB")
 
@@ -104,19 +103,14 @@ def main():
         sys.exit(1)
 
     # Zip and Upload PRO
-    zip_pro = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
-    folder_pro = f"Map_DB-PRO"
+    zip_pro = "Map_DB-Pro.zip"
+    folder_pro = "Map_DB-PRO"
     success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
-    # Also upload static names for old/showroom links compatibility
-    zip_and_upload(folder_pro, "Map_DB-Pro.zip", github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL
-    zip_trial = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
-    folder_trial = f"Map_DB-TRIAL"
+    zip_trial = "Map_DB-Trial.zip"
+    folder_trial = "Map_DB-TRIAL"
     success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
-    # Also upload static names for old/showroom links compatibility
-    zip_and_upload(folder_trial, "Map_DB-Trial.zip", github_pat, upload_url, headers)
-    zip_and_upload(folder_trial, "NPlace-DB-Trial.zip", github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
         print("[ERROR] Failed to find distribution folders. Did you run build_exe.py?")
