@@ -102,15 +102,17 @@ def main():
         print(f"[ERROR] Failed to create GitHub Release: {res.status_code} - {res.text}")
         sys.exit(1)
 
-    # Zip and Upload PRO
-    zip_pro = "Map_DB-Pro.zip"
+    # Zip and Upload PRO (Both versioned and unversioned for latest/OTA support)
+    zip_pro_ver = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
     folder_pro = f"Map_DB-PRO-v{config.CURRENT_VERSION}"
-    success_pro = zip_and_upload(folder_pro, zip_pro, github_pat, upload_url, headers)
+    success_pro = zip_and_upload(folder_pro, zip_pro_ver, github_pat, upload_url, headers)
+    zip_and_upload(folder_pro, "Map_DB-Pro.zip", github_pat, upload_url, headers)
 
-    # Zip and Upload TRIAL
-    zip_trial = "Map_DB-Trial.zip"
+    # Zip and Upload TRIAL (Both versioned and unversioned for latest/OTA support)
+    zip_trial_ver = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
     folder_trial = f"Map_DB-TRIAL-v{config.CURRENT_VERSION}"
-    success_trial = zip_and_upload(folder_trial, zip_trial, github_pat, upload_url, headers)
+    success_trial = zip_and_upload(folder_trial, zip_trial_ver, github_pat, upload_url, headers)
+    zip_and_upload(folder_trial, "Map_DB-Trial.zip", github_pat, upload_url, headers)
 
     if not success_pro and not success_trial:
         print("[ERROR] Failed to find distribution folders. Did you run build_exe.py?")
@@ -123,7 +125,7 @@ def main():
     supabase: Client = create_client(config.SUPABASE_URL, service_key)
     
     # Base URL using the PRO version. updater.py will modify this if it's a TRIAL build
-    github_download_url = f"https://github.com/{github_repo}/releases/download/{tag_name}/{zip_pro}"
+    github_download_url = f"https://github.com/{github_repo}/releases/download/{tag_name}/{zip_pro_ver}"
     
     for p_id in [config.PRODUCT_ID, "NPlace-DB"]:
         supabase.table("app_versions").upsert({
