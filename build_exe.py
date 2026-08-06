@@ -132,13 +132,8 @@ def build_all():
             shutil.rmtree(pyarmor_runtime)
         shutil.copytree(os.path.join("obf_dist", pyarmor_runtime), pyarmor_runtime)
 
-        # 3. Build PRO version
-        modify_config_build_type(config_path, "PRO")
+        # 3. Build PRO version (serves as the single engine for both PRO and TRIAL)
         build_version(v, "PRO", pyarmor_runtime)
-        
-        # 4. Build TRIAL version
-        modify_config_build_type(config_path, "TRIAL")
-        build_version(v, "TRIAL", pyarmor_runtime)
 
     finally:
         # Restore original config.py

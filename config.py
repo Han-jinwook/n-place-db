@@ -10,14 +10,27 @@ except ImportError:
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
 PRODUCT_ID = "Map_DB"
 CURRENT_VERSION = "1.1.93"
-BUILD_TYPE = "PRO"  # "PRO" or "TRIAL"
 
-# [PRO] Determine dynamic base path: Executable dir if frozen, else project root
 import sys
 if getattr(sys, 'frozen', False):
     LOCAL_BASE_PATH = os.path.dirname(sys.executable)
 else:
     LOCAL_BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+
+# Determine dynamic BUILD_TYPE based on mode.txt in the executable directory
+mode_txt_path = os.path.join(LOCAL_BASE_PATH, "mode.txt")
+if os.path.exists(mode_txt_path):
+    try:
+        with open(mode_txt_path, "r", encoding="utf-8") as _f:
+            _content = _f.read().strip().upper()
+            if _content in ("PRO", "TRIAL"):
+                BUILD_TYPE = _content
+            else:
+                BUILD_TYPE = "PRO"
+    except Exception:
+        BUILD_TYPE = "PRO"
+else:
+    BUILD_TYPE = "PRO"  # Default fallback if no file exists
 
 # [NEW] Persistent User Settings & License Path (Windows Roaming AppData)
 if sys.platform == "win32":

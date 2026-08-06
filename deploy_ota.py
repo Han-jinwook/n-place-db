@@ -102,20 +102,41 @@ def main():
         print(f"[ERROR] Failed to create GitHub Release: {res.status_code} - {res.text}")
         sys.exit(1)
 
+    # Verify and stage single engine build
+    folder_pro = f"Map_DB-PRO-v{config.CURRENT_VERSION}"
+    folder_pro_path = os.path.join("dist", folder_pro)
+    
+    if not os.path.exists(folder_pro_path):
+        print(f"[ERROR] Base PRO distribution folder not found: {folder_pro_path}. Did you run build_exe.py?")
+        sys.exit(1)
+        
+    # Write PRO mode to base engine folder
+    with open(os.path.join(folder_pro_path, "mode.txt"), "w", encoding="utf-8") as f:
+        f.write("PRO")
+        
+    # Prepare TRIAL folder by copying PRO engine and writing TRIAL mode.txt
+    folder_trial = f"Map_DB-TRIAL-v{config.CURRENT_VERSION}"
+    folder_trial_path = os.path.join("dist", folder_trial)
+    if os.path.exists(folder_trial_path):
+        shutil.rmtree(folder_trial_path, ignore_errors=True)
+        
+    print(f"Staging TRIAL folder by copying {folder_pro_path} -> {folder_trial_path}...")
+    shutil.copytree(folder_pro_path, folder_trial_path)
+    with open(os.path.join(folder_trial_path, "mode.txt"), "w", encoding="utf-8") as f:
+        f.write("TRIAL")
+
     # Zip and Upload PRO (Both versioned and unversioned for latest/OTA support)
     zip_pro_ver = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
-    folder_pro = f"Map_DB-PRO-v{config.CURRENT_VERSION}"
     success_pro = zip_and_upload(folder_pro, zip_pro_ver, github_pat, upload_url, headers)
     zip_and_upload(folder_pro, "Map_DB-Pro.zip", github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL (Both versioned and unversioned for latest/OTA support)
     zip_trial_ver = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
-    folder_trial = f"Map_DB-TRIAL-v{config.CURRENT_VERSION}"
     success_trial = zip_and_upload(folder_trial, zip_trial_ver, github_pat, upload_url, headers)
     zip_and_upload(folder_trial, "Map_DB-Trial.zip", github_pat, upload_url, headers)
 
-    if not success_pro and not success_trial:
-        print("[ERROR] Failed to find distribution folders. Did you run build_exe.py?")
+    if not success_pro or not success_trial:
+        print("[ERROR] Packaging or upload failed.")
         sys.exit(1)
 
     # ---------------------------------------------------------
