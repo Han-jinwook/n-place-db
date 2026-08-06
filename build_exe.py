@@ -59,10 +59,13 @@ def build_version(v, build_type, pyarmor_runtime):
     try:
         PyInstaller.__main__.run(args)
         
-        # Rename the output folder from dist/Map_DB-{build_type} to dist/Map_DB-{build_type}-v{v}
+        # Rename the output folder to dist/Map_DB-v{v}/Map_DB-{build_type}-v{v}
         src_dir = os.path.join("dist", exe_name)
-        dst_dir = os.path.join("dist", f"Map_DB-{build_type}-v{v}")
+        dst_parent = os.path.join("dist", f"Map_DB-v{v}")
+        dst_dir = os.path.join(dst_parent, f"Map_DB-{build_type}-v{v}")
         print(f"Renaming compiled directory {src_dir} to {dst_dir}...")
+        if not os.path.exists(dst_parent):
+            os.makedirs(dst_parent, exist_ok=True)
         if os.path.exists(dst_dir):
             shutil.rmtree(dst_dir, ignore_errors=True)
         if os.path.exists(src_dir):

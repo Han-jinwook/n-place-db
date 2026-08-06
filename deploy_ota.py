@@ -6,24 +6,23 @@ import requests
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-def zip_and_upload(dist_folder_name, zip_filename, github_pat, upload_url, headers):
-    dist_folder_path = os.path.join("dist", dist_folder_name)
-    if not os.path.exists(dist_folder_path):
-        print(f"[ERROR] Distribution folder not found: {dist_folder_path}")
+def zip_and_upload(folder_path, zip_filepath, github_pat, upload_url, headers):
+    if not os.path.exists(folder_path):
+        print(f"[ERROR] Distribution folder not found: {folder_path}")
         return False
 
-    zip_filepath = os.path.join("dist", zip_filename)
-    print(f"Compressing {dist_folder_path} to {zip_filepath}...")
+    print(f"Compressing {folder_path} to {zip_filepath}...")
     if os.path.exists(zip_filepath):
         os.remove(zip_filepath)
         
     shutil.make_archive(
-        base_name=os.path.join("dist", zip_filename.replace(".zip", "")),
+        base_name=zip_filepath.replace(".zip", ""),
         format='zip',
-        root_dir=dist_folder_path
+        root_dir=folder_path
     )
     print(f"Compression complete. File size: {os.path.getsize(zip_filepath) / (1024*1024):.2f} MB")
 
+    zip_filename = os.path.basename(zip_filepath)
     print(f"Uploading {zip_filename} to GitHub Release...")
     upload_headers = headers.copy()
     upload_headers["Content-Type"] = "application/zip"
@@ -103,8 +102,8 @@ def main():
         sys.exit(1)
 
     # Verify and stage single engine build
-    folder_pro = f"Map_DB-PRO-v{config.CURRENT_VERSION}"
-    folder_pro_path = os.path.join("dist", folder_pro)
+    base_dir = os.path.join("dist", f"Map_DB-v{config.CURRENT_VERSION}")
+    folder_pro_path = os.path.join(base_dir, f"Map_DB-PRO-v{config.CURRENT_VERSION}")
     
     if not os.path.exists(folder_pro_path):
         print(f"[ERROR] Base PRO distribution folder not found: {folder_pro_path}. Did you run build_exe.py?")
@@ -115,8 +114,7 @@ def main():
         f.write("PRO")
         
     # Prepare TRIAL folder by copying PRO engine and writing TRIAL mode.txt
-    folder_trial = f"Map_DB-TRIAL-v{config.CURRENT_VERSION}"
-    folder_trial_path = os.path.join("dist", folder_trial)
+    folder_trial_path = os.path.join(base_dir, f"Map_DB-TRIAL-v{config.CURRENT_VERSION}")
     if os.path.exists(folder_trial_path):
         shutil.rmtree(folder_trial_path, ignore_errors=True)
         
@@ -125,15 +123,31 @@ def main():
     with open(os.path.join(folder_trial_path, "mode.txt"), "w", encoding="utf-8") as f:
         f.write("TRIAL")
 
-    # Zip and Upload PRO (Both versioned and unversioned for latest/OTA support)
+    # Create deploy output directory (배포)
+    deploy_dir = os.path.join(base_dir, "배포")
+    os.makedirs(deploy_dir, exist_ok=True)
+
+    # Define ZIP filenames & target file paths
     zip_pro_ver = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
-    success_pro = zip_and_upload(folder_pro, zip_pro_ver, github_pat, upload_url, headers)
-    zip_and_upload(folder_pro, "Map_DB-Pro.zip", github_pat, upload_url, headers)
+    zip_pro_ver_path = os.path.join(deploy_dir, zip_pro_ver)
+    zip_pro_latest_path = os.path.join(deploy_dir, "Map_DB-Pro.zip")
+    
+    zip_trial_ver = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
+    zip_trial_ver_path = os.path.join(deploy_dir, zip_trial_ver)
+    zip_trial_latest_path = os.path.join(deploy_dir, "Map_DB-Trial.zip")
+
+    # Zip and Upload PRO (Both versioned and unversioned for latest/OTA support)
+    success_pro = zip_and_upload(folder_pro_path, zip_pro_ver_path, github_pat, upload_url, headers)
+    zip_and_upload(folder_pro_path, zip_pro_latest_path, github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL (Both versioned and unversioned for latest/OTA support)
-    zip_trial_ver = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
-    success_trial = zip_and_upload(folder_trial, zip_trial_ver, github_pat, upload_url, headers)
-    zip_and_upload(folder_trial, "Map_DB-Trial.zip", github_pat, upload_url, headers)
+    success_trial = zip_and_upload(folder_trial_path, zip_trial_ver_path, github_pat, upload_url, headers)
+    zip_and_upload(folder_trial_path, zip_trial_latest_path, github_pat, upload_url, headers)
+
+    # Clean up temporary TRIAL folder to keep the directory clean
+    if os.path.exists(folder_trial_path):
+        print(f"Cleaning up temporary TRIAL folder: {folder_trial_path}")
+        shutil.rmtree(folder_trial_path, ignore_errors=True)
 
     if not success_pro or not success_trial:
         print("[ERROR] Packaging or upload failed.")
