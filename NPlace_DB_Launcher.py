@@ -16,7 +16,7 @@ from PIL import Image
 # [NEW] Splash Screen Support (PyInstaller)
 try:
     import pyi_splash
-except ImportError:
+except Exception:
     pyi_splash = None
 
 # Configure logging to file ONLY (prevent StreamHandler crashes in frozen mode)

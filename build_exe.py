@@ -114,7 +114,7 @@ def build_all():
         if os.path.exists("obf_dist"):
             shutil.rmtree("obf_dist")
         
-        os.system(f"pyarmor gen -O obf_dist {' '.join(target_scripts)}")
+        os.system(f"pyarmor gen --obf-code 0 -O obf_dist {' '.join(target_scripts)}")
         
         for item in os.listdir("obf_dist"):
             if item.startswith("pyarmor_runtime_"):
