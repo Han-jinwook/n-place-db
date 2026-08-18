@@ -1,0 +1,136 @@
+# 🔱 Monster 하위 프로그램 빌드 및 배포 강령
+
+- **문서 번호**: 3M-DOC-002
+- **버전**: v1.0
+- **갱신 일시**: 2026-08-05
+- **관리 주체**: Monster 총괄 AI (Hub AI)
+
+---
+
+본 문서는 `3Monster` 프로젝트 산하 하위 프로그램들의 로컬 컴파일(PyInstaller 빌드), 패키징(압축), 그리고 깃허브(GitHub Releases) 및 Supabase DB 연동 자동 배포에 대한 절대 지침서입니다. 다음 세션의 AI는 반드시 이 가이드를 읽고 하부 제품들의 빌드 및 배포 작업을 수행하십시오.
+
+---
+
+## 🚫 배포 프로세스 철칙: 선(先) 폴더 빌드 ➡️ 후(後) 로컬 테스트 ➡️ 최종 압축 및 배포
+
+> [!IMPORTANT]
+> **빌드 전 보안 및 라이선스 사전 검증 필수**:
+> 1. **보안 검증**: 소스 코드(특히 `config.py` 등) 및 로컬 패키징 영역에 민감한 API 키, GitHub PAT, DB 접속 정보 등의 크리덴셜 정보가 하드코딩되어 유출되지 않는지 철저히 사전 점검하십시오.
+> 2. **라이선스 검증**: 기기별 HWID 우회 가능성, 인증 우회용 로컬 파일 조작 가능성, 그리고 등급별(PRO/TRIAL) 이용 한도 제한 메커니즘이 코드 내에 완벽하게 활성화되어 작동하는지 빌드 전에 반드시 한 번 더 검증하십시오.
+
+모든 하부 제품의 배포 시, AI는 **자동 빌드 후 곧바로 압축(ZIP) 파일을 만들거나 깃허브 업로드를 진행해서는 안 됩니다.** 반드시 아래 단계를 엄수하십시오.
+1. **1단계 (기본 엔진 폴더 빌드)**: PyInstaller 빌드만 돌려 로컬 `dist` 밑에 실행 폴더(`Map_DB-PRO`, `cafescraper_V...` 등)를 생성합니다.
+2. **2단계 (개발자 테스트 대기)**: 빌드가 완료되면 작업을 멈추고 대표님께 **"기본 엔진 폴더 빌드가 완료되었습니다. 직접 실행하여 로컬 테스트를 진행해 주세요"**라고 안내합니다.
+3. **3단계 (승인 후 배포)**: 대표님께서 직접 실행 파일(`.exe`)을 테스트하신 후 최종 배포 승인("배포해라", "업로드해라" 등)을 하셨을 때만 압축(ZIP) 패키징을 수행하고 깃허브 릴리즈 및 Supabase 갱신을 진행합니다.
+
+### 🛠️ 단일 엔진 컴파일 및 설정 파일 분기 규정 (Single Engine & Runtime Config)
+* **개별 빌드 금지**: 등급별(PRO / TRIAL 등)로 무거운 PyInstaller 컴파일을 따로 수행하여 여러 개의 실행 엔진 폴더를 만들지 않는다.
+* **단일 엔진 컴파일**: 공통으로 실행 가능한 기본 엔진을 **단 1회만 빌드**하여 하나의 실행 폴더(예: `Map_DB-PRO-v1.1.93`, `cafescraper_V1.3.65`)만 생성한다.
+* **설정 파일 분기**: 프로그램의 등급(PRO, TRIAL 등) 작동 제한 및 메인 화면 제목은 컴파일 시점에 결정하지 않고, 프로그램 실행 시 내부에 존재하는 텍스트 파일(`mode.txt` 등)의 내용을 읽어 동적으로 결정한다.
+* **패키징 자동화**: 배포용 ZIP 압축 파일을 생성할 때, 공통 엔진 폴더를 스테이징(Staging)에 복사한 후 `mode.txt`에 해당 제품 사양에 맞는 값(`PRO` 또는 `TRIAL`)을 작성해 넣고 최종 압축을 완성한다.
+
+---
+
+## 1. N플레이스 타겟 DB 수집기 (Map_DB / N-Place-DB)
+
+### 📂 정보 및 환경 설정
+* **로컬 소스 경로**: `d:\N-Place-DB`
+* **깃허브 저장소**: `https://github.com/Han-jinwook/n-place-db`
+* **인증 및 자격 증명**: `.env` 파일 (루트에 위치, `GITHUB_PAT` 및 `SUPABASE_SERVICE_ROLE_KEY` 내장)
+* **버전 제어 파일**: `config.py` 내 `CURRENT_VERSION = "1.1.X"` 변수
+
+### 🛠️ 빌드 및 배포 프로세스 (프로그램별)
+1. **버전 수정**: 
+   * 배포 전 `config.py` 파일의 `CURRENT_VERSION`을 최신화합니다.
+2. **로컬 빌드**:
+   * **`build.bat`** 파일을 실행합니다.
+   * `build_exe.py`가 작동하며 `config.py`의 `BUILD_TYPE`을 런타임에 동적으로 변경하여 `dist\Map_DB-PRO` 및 `dist\Map_DB-TRIAL`을 순차적으로 PyInstaller 컴파일합니다.
+3. **배포 및 업로드 (자동화)**:
+   * 터미널에서 **`python deploy_ota.py`** 명령을 실행합니다.
+   * 이 스크립트는 **2종의 최종 ZIP 패키지**를 자동 압축 및 업로드하고 Supabase를 동기화합니다:
+     1. `Map_DB-Pro.zip` (정식판 패키지)
+     2. `Map_DB-Trial.zip` (체험판 패키지)
+   * 깃허브 Releases에 태그(`v{Version}`)를 생성하여 위 2개 자산을 업로드하고 Supabase `app_versions` 테이블을 최종 업데이트합니다.
+
+---
+
+## 2. 카페 몬스터 통합본 (CafeScraper / CafeMonster)
+
+### 📂 정보 및 환경 설정
+* **로컬 소스 경로**: `d:\CafeScraper`
+* **깃허브 저장소**: `https://github.com/Han-jinwook/CafeScraper`
+* **인증 및 자격 증명**: `.env` 파일 (N-Place-DB의 토큰을 복사하여 루트에 보관)
+* **버전 제어 파일**: `version.txt` (단 한 줄로 버전 기록, 예: `1.3.65`)
+
+### 🛠️ 빌드 및 배포 프로세스 (프로그램별)
+1. **버전 수정**: 
+   * 배포 전 `version.txt`와 `CHANGELOG.md`를 갱신합니다.
+2. **로컬 빌드**:
+   * **`build.bat`** 파일을 실행합니다.
+   * PyInstaller 컴파일러가 작동하여 `dist\cafescraper_V{Version}` 폴더에 단독 실행형 실행 파일(`CafeScraper.exe`)을 빌드합니다.
+3. **패키징 (압축 분리)**:
+   * **`package.bat`** 파일을 실행합니다.
+   * `scripts\pack_dist.ps1` 스크립트가 실행되어 빌드된 결과물을 기반으로 `mode.txt` 분기 데이터를 동적으로 셋업하고, 프로젝트 루트에 **4종의 최종 배포용 ZIP 파일**을 구성합니다:
+     * `CafeCrawler-Pro.zip` (기본 정품 모드)
+     * `EventStats-Pro.zip` (기본 정품 모드)
+     * `AutoComment-Pro.zip` (기본 정품 모드)
+     * `CafeMonster-Trial.zip` (기본 체험판 모드 - **3개 하위 기능의 통합 체험판**)
+4. **배포 및 업로드 (자동화)**:
+   * 터미널에서 **`python deploy_ota.py`** 명령을 실행합니다.
+   * 작성 완료된 4개의 ZIP 파일을 `Han-jinwook/CafeScraper` 깃허브의 버전 태그(`v{Version}`) Releases 페이지에 업로드합니다.
+   * 동시에 Supabase `app_versions` 테이블에 `CafeCrawler`, `EventStats`, `AutoComment` 3개 제품군의 최신 버전 정보와 다운로드 URL 링크를 한 번에 갱신하여 OTA 업데이트 시스템을 동기화합니다.
+
+---
+
+## 3. 3Monster 통합 웹 허브 (대시보드 & 쇼룸)
+
+### 📂 정보 및 환경 설정
+* **로컬 소스 경로**: `d:\3Monster`
+* **깃허브 저장소**: `https://github.com/Han-jinwook/3Monster`
+
+### 🔗 체험판 다운로드 매핑 규칙
+하위 제품들의 배포 방식이 단일화됨에 따라 쇼룸 및 어드민 대시보드 내의 Trial 다운로드 경로를 다음과 같이 고정하여 연동해야 합니다.
+
+1. **카페 몬스터 3종 체험판 (카페수집기 / 활동분석기 / 자동댓글러)**:
+   * **다운로드 연결 파일**: `CafeMonster-Trial.zip`
+   * **쇼룸 코드 ([Showroom.tsx](file:///d:/3Monster/admin-dashboard/src/pages/Showroom.tsx))**:
+     ```typescript
+     selectedProduct.id === 'cafe-crawler' || selectedProduct.id === 'event-activity-stats' || selectedProduct.id === 'comment-stats'
+         ? "https://github.com/Han-jinwook/CafeScraper/releases/latest/download/CafeMonster-Trial.zip"
+     ```
+   * **어드민 허브 ([LicenseGenerator.tsx](file:///d:/3Monster/admin-dashboard/src/pages/LicenseGenerator.tsx))**:
+     ```typescript
+     if (type === 'Trial' && (productId === 'CafeCrawler' || productId === 'EventStats' || productId === 'AutoComment')) {
+         return `https://github.com/Han-jinwook/CafeScraper/releases/latest/download/CafeMonster-Trial.zip`;
+     }
+     ```
+
+2. **N플레이스 DB 추출기 체험판**:
+   * **다운로드 연결 파일**: `Map_DB-Trial.zip`
+   * **쇼룸 코드**:
+     ```typescript
+     selectedProduct.id === 'nplace-db'
+         ? "https://github.com/Han-jinwook/n-place-db/releases/latest/download/Map_DB-Trial.zip"
+     ```
+
+---
+
+## 4. UI 및 OTA 업데이트 안정성 절대 규칙 (UI/OTA Safety Rules)
+
+최근 확인된 버그를 기반으로 모든 하부 앱(`N-Place-DB`, `CafeScraper` 등)에서 공통적으로 지켜야 할 UI 렌더링 및 자동 업데이트 절대 수칙입니다.
+
+### 4.1. 인증창(Auth GUI) 렌더링 동기화 처리 (Race Condition 방지)
+- **규칙**: 인증 상태를 확인하는 로직은 GUI(`tkinter` 등) 창이 본격적으로 이벤트 루프(`mainloop()`)에 진입하기 **전**에 동기적으로 처리되어야 합니다.
+- **사유**: 백그라운드 스레드에서 서버 응답을 대기하다가 `self.after(0, destroy)`를 호출하는 방식은, 네트워크 속도가 매우 빠를 경우 UI 창이 렌더링되기도 전에 종료 이벤트가 소비되어버리는 레이스 컨디션을 유발합니다. 이로 인해 인증된 사용자에게도 인증창이 닫히지 않고 계속 노출되는 치명적인 버그가 발생할 수 있습니다.
+
+### 4.2. 식별 파일(mode.txt 등)의 인코딩 강제 (BOM 차단)
+- **규칙 1 (생성 측면)**: PowerShell 등 윈도우 스크립트에서 텍스트 파일(`mode.txt`)을 생성할 때, `Set-Content -Encoding Utf8` 사용을 **절대 엄금**합니다. 대신 `-Encoding ascii`를 사용하여 투명한 BOM(`\ufeff`) 바이트가 삽입되지 않도록 원천 차단해야 합니다.
+- **규칙 2 (소비 측면)**: 파이썬 등 코드 내부에서 설정이나 식별 파일을 읽을 때는 `strip()` 처리뿐만 아니라, `content.startswith('\ufeff')`를 명시적으로 검사하여 BOM을 잘라내는(`content[1:]`) 이중 방어 로직을 무조건 탑재해야 합니다.
+- **사유**: BOM 바이트가 포함된 파일 내용을 문자열로 비교할 경우(`content == "PRO_CAFECRAWLER"`), 눈에 보이지 않는 바이트 차이로 인해 조건문이 `False`로 떨어져 앱이 엉뚱한 제품명으로 폴백(Fallback)되거나 비정상 작동하게 됩니다.
+
+### 4.3. OTA 업데이터의 제품 ID 하드코딩 금지
+- **규칙**: 통합 앱(`CafeScraper` 등 다수의 제품이 하나의 패키지를 공유하는 경우)의 `updater.py` 내부에 특정 `PRODUCT_ID`를 상수로 하드코딩해서는 안 됩니다.
+- **사유**: 하드코딩된 제품 ID를 기준으로 최신 릴리즈를 검색하면, A 제품을 구매한 유저가 B 제품의 업데이트 압축 파일을 다운로드하여 덮어쓰게 되는 대형 사고가 발생합니다. 업데이터는 반드시 현재 설치된 실행 폴더의 `mode.txt` 등을 런타임에 동적으로 읽어서 유저가 실제로 사용 중인 `PRODUCT_ID`를 파악한 뒤 업데이트를 진행해야 합니다.
+
+---
+*Updated on 2026-08-18 by Antigravity*
