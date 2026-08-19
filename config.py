@@ -9,7 +9,7 @@ except ImportError:
 
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
 PRODUCT_ID = "Map_DB"
-CURRENT_VERSION = "1.1.93"
+CURRENT_VERSION = "1.1.94"
 
 import sys
 if getattr(sys, 'frozen', False):
@@ -193,9 +193,8 @@ FIREBASE_SERVICE_ACCOUNT = {
 FIREBASE_COLLECTION = "collected_shops" # 수집 데이터 저장소
 FIREBASE_AUTH_COLLECTION = "licenses"   # 라이선스 관리 컬렉션 (가이드 준수)
 
-# --- [Supabase 설정] ---
 SUPABASE_URL = os.getenv("VITE_SUPABASE_URL", "https://suwinftalfgybvrnzruz.supabase.co")
-SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1d2luZnRhbGZneWJ2cm56cnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMDQ3OTEsImV4cCI6MjA5MTg4MDc5MX0.OJAE_djjwIxR1pDNVx45HprOcAtU8gZopGJx8hvJMt4")
+SUPABASE_KEY = os.getenv("VITE_SUPABASE_ANON_KEY", "sb_publishable_jUwQ1BWvG6F2H9GyELUoFw_mUOHbgWD")
 # ------------------------------
 
 
