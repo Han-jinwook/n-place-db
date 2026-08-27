@@ -135,7 +135,7 @@ class MainApp(ctk.CTk):
             messagebox.showinfo(
                 "체험판 안내",
                 "현재 체험판 모드로 실행 중입니다.\n\n"
-                "• 체험판은 하루 최대 50건까지 수집이 가능합니다.\n"
+                "• 체험판은 하루 최대 100건까지 수집이 가능합니다.\n"
                 "• 수집된 데이터의 엑셀 저장 기능을 테스트해보실 수 있습니다.\n\n"
                 "정식 버전 전환을 원하시면 관리자에게 문의해주세요."
             )
@@ -332,7 +332,7 @@ class MainApp(ctk.CTk):
                 current_total = AuthManager.get_and_sync_trial_used_count()
                 remaining = max(0, limit - current_total)
                 if remaining <= 0:
-                    messagebox.showerror("체험 한도 초과", "무료 체험판 수집 한도(50건)를 모두 소진하셨습니다.\n정식 라이선스를 구매하여 이용해 주세요.")
+                    messagebox.showerror("체험 한도 초과", "무료 체험판 수집 한도(100건)를 모두 소진하셨습니다.\n정식 라이선스를 구매하여 이용해 주세요.")
                     self.btn_start.configure(state="normal")
                     self.btn_stop.configure(state="disabled")
                     self.is_running = False

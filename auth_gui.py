@@ -117,7 +117,7 @@ class AuthWindow(ctk.CTk):
 
         # TRIAL 버전인 경우에만 웰컴 화면 렌더링, PRO 버전은 웰컴 화면 아예 없음
         if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL":
-            self.btn_goto_trial = ctk.CTkButton(self.auth_stage, text="정품 키가 없으신가요? (1회 한정 50건 체험하기)", 
+            self.btn_goto_trial = ctk.CTkButton(self.auth_stage, text="정품 키가 없으신가요? (1회 한정 100건 체험하기)", 
                                                font=("Arial", 12, "underline"),
                                                fg_color="transparent", text_color="#A855F7",
                                                hover_color=self.bg_dark,
@@ -132,11 +132,11 @@ class AuthWindow(ctk.CTk):
             self.lbl_welcome.pack(pady=(10, 10))
 
             self.lbl_trial_desc = ctk.CTkLabel(self.welcome_stage, 
-                                               text="Map_DB Pro의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[무기한, 총 50건 제공]", 
+                                               text="Map_DB Pro의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[무기한, 총 100건 제공]", 
                                                font=("Arial", 16, "bold"), text_color="#A855F7", justify="center")
             self.lbl_trial_desc.pack(pady=(0, 25))
 
-            self.btn_start_trial = ctk.CTkButton(self.welcome_stage, text="1회 한정 50건 체험하기", 
+            self.btn_start_trial = ctk.CTkButton(self.welcome_stage, text="1회 한정 100건 체험하기", 
                                                 font=("Arial", 18, "bold"),
                                                 fg_color=self.brand_purple, hover_color="#5300ce",
                                                 height=70, corner_radius=20, command=self.start_trial_flow)
