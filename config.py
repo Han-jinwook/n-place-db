@@ -9,7 +9,7 @@ except ImportError:
 
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
 PRODUCT_ID = "Map_DB"
-CURRENT_VERSION = "1.1.94"
+CURRENT_VERSION = "1.1.95"
 
 import sys
 if getattr(sys, 'frozen', False):
