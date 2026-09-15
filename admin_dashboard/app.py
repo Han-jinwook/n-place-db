@@ -622,7 +622,7 @@ with st.container():
                 <img src="data:image/png;base64,{logo_base64}" width="110" style="margin-bottom:5px;">
                 <div style="display:flex; flex-direction:column;">
                     <div style="display:flex; align-items:baseline; gap:8px;">
-                    <div style="font-size:2.0rem; font-weight:900; background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing:-1.5px; filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));">Map_DB {"Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"}</div>
+                    <div style="font-size:2.0rem; font-weight:900; background: linear-gradient(135deg, #A855F7 0%, #3B82F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing:-1.5px; filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));">NPlace_DB {"Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"}</div>
                     <div style="font-size:0.75rem; font-weight:700; color:#94A3B8; background:#F8FAFC; padding:1px 6px; border-radius:5px; border:1px solid #E2E8F0;">v{config.CURRENT_VERSION}</div>
                     </div>
                 </div>
@@ -1547,7 +1547,7 @@ if st.session_state['active_page'] == 'Shop Search':
                             file_path = MonsterExporter.get_export_filepath(
                                 custom_prefix=_prefix,
                                 extension="csv",
-                                product_id="map_db"
+                                product_id="NPlace-DB"
                             )
                             drop_cols = ['id', 'latitude', 'longitude', 'talk_url', 'owner_name']
                             df_ex = df_ex.drop(columns=[c for c in drop_cols if c in df_ex.columns], errors='ignore')
@@ -1753,7 +1753,7 @@ elif st.session_state['active_page'] == 'Track C':
     df_track_c = load_local_data()
     render_track('C', '인스타 DM 마케팅', '인스타', 'DM 서버', df_track_c)
 elif st.session_state['active_page'] == 'Guide':
-    st.markdown('<div class="section-title">📖 Map_DB Pro 공식 가이드</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📖 N플레이스 DB & 대량발송기 공식 가이드</div>', unsafe_allow_html=True)
     
     st.markdown("<br><br>", unsafe_allow_html=True)
     

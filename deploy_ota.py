@@ -102,8 +102,8 @@ def main():
         sys.exit(1)
 
     # Verify and stage single engine build
-    base_dir = os.path.join("dist", f"Map_DB-v{config.CURRENT_VERSION}")
-    folder_pro_path = os.path.join(base_dir, f"Map_DB-PRO-v{config.CURRENT_VERSION}")
+    base_dir = os.path.join("dist", f"NPlace-DB-v{config.CURRENT_VERSION}")
+    folder_pro_path = os.path.join(base_dir, f"NPlace-DB-PRO-v{config.CURRENT_VERSION}")
     
     if not os.path.exists(folder_pro_path):
         print(f"[ERROR] Base PRO distribution folder not found: {folder_pro_path}. Did you run build_exe.py?")
@@ -114,7 +114,7 @@ def main():
         f.write("PRO")
         
     # Prepare TRIAL folder by copying PRO engine and writing TRIAL mode.txt
-    folder_trial_path = os.path.join(base_dir, f"Map_DB-TRIAL-v{config.CURRENT_VERSION}")
+    folder_trial_path = os.path.join(base_dir, f"NPlace-DB-TRIAL-v{config.CURRENT_VERSION}")
     if os.path.exists(folder_trial_path):
         shutil.rmtree(folder_trial_path, ignore_errors=True)
         
@@ -127,22 +127,28 @@ def main():
     deploy_dir = os.path.join(base_dir, "배포")
     os.makedirs(deploy_dir, exist_ok=True)
 
-    # Define ZIP filenames & target file paths
-    zip_pro_ver = f"Map_DB-Pro-v{config.CURRENT_VERSION}.zip"
+    # Define ZIP filenames & target file paths (Primary: NPlace-DB)
+    zip_pro_ver = f"NPlace-DB-Pro-v{config.CURRENT_VERSION}.zip"
     zip_pro_ver_path = os.path.join(deploy_dir, zip_pro_ver)
-    zip_pro_latest_path = os.path.join(deploy_dir, "Map_DB-Pro.zip")
+    zip_pro_latest_path = os.path.join(deploy_dir, "NPlace-DB-Pro.zip")
     
-    zip_trial_ver = f"Map_DB-Trial-v{config.CURRENT_VERSION}.zip"
+    zip_trial_ver = f"NPlace-DB-Trial-v{config.CURRENT_VERSION}.zip"
     zip_trial_ver_path = os.path.join(deploy_dir, zip_trial_ver)
-    zip_trial_latest_path = os.path.join(deploy_dir, "Map_DB-Trial.zip")
+    zip_trial_latest_path = os.path.join(deploy_dir, "NPlace-DB-Trial.zip")
+
+    # Backward compatibility ZIPs (Map_DB)
+    compat_map_pro_path = os.path.join(deploy_dir, "Map_DB-Pro.zip")
+    compat_map_trial_path = os.path.join(deploy_dir, "Map_DB-Trial.zip")
 
     # Zip and Upload PRO (Both versioned and unversioned for latest/OTA support)
     success_pro = zip_and_upload(folder_pro_path, zip_pro_ver_path, github_pat, upload_url, headers)
     zip_and_upload(folder_pro_path, zip_pro_latest_path, github_pat, upload_url, headers)
+    zip_and_upload(folder_pro_path, compat_map_pro_path, github_pat, upload_url, headers)
 
     # Zip and Upload TRIAL (Both versioned and unversioned for latest/OTA support)
     success_trial = zip_and_upload(folder_trial_path, zip_trial_ver_path, github_pat, upload_url, headers)
     zip_and_upload(folder_trial_path, zip_trial_latest_path, github_pat, upload_url, headers)
+    zip_and_upload(folder_trial_path, compat_map_trial_path, github_pat, upload_url, headers)
 
     # Clean up temporary TRIAL folder to keep the directory clean
     if os.path.exists(folder_trial_path):
@@ -162,12 +168,12 @@ def main():
     # Base URL using the PRO version. updater.py will modify this if it's a TRIAL build
     github_download_url = f"https://github.com/{github_repo}/releases/download/{tag_name}/{zip_pro_ver}"
     
-    for p_id in [config.PRODUCT_ID, "NPlace-DB"]:
+    for p_id in [config.PRODUCT_ID, "Map_DB", "NPlace-DB"]:
         supabase.table("app_versions").upsert({
             "product_id": p_id,
             "version": config.CURRENT_VERSION,
             "download_url": github_download_url,
-            "release_notes": f"⚡ {config.SERVICE_NAME_KR} Map_DB Pro 업그레이드 및 기능 개선 (v{config.CURRENT_VERSION})"
+            "release_notes": f"⚡ {config.SERVICE_NAME_KR} 정식 브랜드(NPlace-DB) 전면 복원 및 엔진 최신화 (v{config.CURRENT_VERSION})"
         }).execute()
     
     print("Supabase DB records inserted.")

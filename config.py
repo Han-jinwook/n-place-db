@@ -8,8 +8,8 @@ except ImportError:
     pass
 
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
-PRODUCT_ID = "Map_DB"
-CURRENT_VERSION = "1.1.95"
+PRODUCT_ID = "NPlace-DB"
+CURRENT_VERSION = "1.1.96"
 
 import sys
 if getattr(sys, 'frozen', False):
@@ -34,12 +34,12 @@ else:
 
 # [NEW] Persistent User Settings & License Path (Windows Roaming AppData)
 if sys.platform == "win32":
-    USER_SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "Map_DB")
+    USER_SETTINGS_PATH = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "NPlace-DB")
 else:
-    USER_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".config", "MarketingMonster", "Map_DB")
+    USER_SETTINGS_PATH = os.path.join(os.path.expanduser("~"), ".config", "MarketingMonster", "NPlace-DB")
 
 # [NEW] Persistent User Data Path (Zero-maintenance Data Policy - My Documents)
-USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "Map_DB")
+USER_DATA_PATH = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
 
 # Centralized Persistent Paths
 ARCHIVE_DB_PATH = os.path.join(USER_DATA_PATH, "DB")
@@ -65,7 +65,17 @@ SETTINGS_FILE = os.path.join(USER_SETTINGS_PATH, "user_settings.json")
 # [NEW] Automatic Settings & License Migration from Old Paths to USER_SETTINGS_PATH
 import shutil
 
-# 1. Migrate settings and templates from old USER_DATA_PATH (Documents) to USER_SETTINGS_PATH (AppData)
+# 1. Migrate settings and templates from old Map_DB settings/data paths to NPlace-DB
+old_mapdb_settings = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "MarketingMonster", "Map_DB")
+if os.path.exists(old_mapdb_settings):
+    for fn in ["user_settings.json", "templates.json", "license.dat", "license_cache.json"]:
+        old_f = os.path.join(old_mapdb_settings, fn)
+        new_f = os.path.join(USER_SETTINGS_PATH, fn)
+        if os.path.exists(old_f) and not os.path.exists(new_f):
+            try: shutil.copy2(old_f, new_f)
+            except: pass
+
+# 2. Migrate settings and templates from old USER_DATA_PATH (Documents) to USER_SETTINGS_PATH (AppData)
 for filename in ["user_settings.json", "templates.json"]:
     old_file = os.path.join(USER_DATA_PATH, filename)
     new_file = os.path.join(USER_SETTINGS_PATH, filename)
@@ -74,7 +84,7 @@ for filename in ["user_settings.json", "templates.json"]:
             shutil.move(old_file, new_file)
         except: pass
 
-# 2. Migrate license.dat from LOCAL_BASE_PATH/data/license.dat (old) to USER_SETTINGS_PATH
+# 3. Migrate license.dat from LOCAL_BASE_PATH/data/license.dat (old) to USER_SETTINGS_PATH
 old_lic = os.path.join(LOCAL_BASE_PATH, "data", "license.dat")
 new_lic = os.path.join(USER_SETTINGS_PATH, "license.dat")
 if os.path.exists(old_lic) and not os.path.exists(new_lic):
@@ -83,7 +93,6 @@ if os.path.exists(old_lic) and not os.path.exists(new_lic):
     except: pass
 
 # [NEW] Automatic Data Migration (Rule 3.3: Portable -> Persistent)
-# Migration should only happen ONCE to prevent old data from reappearing after a reset
 migration_marker = os.path.join(USER_DATA_PATH, ".migration_done")
 old_data_dir = os.path.join(LOCAL_BASE_PATH, "data")
 
@@ -92,42 +101,17 @@ if not os.path.exists(migration_marker):
     if os.path.exists(old_data_dir):
         old_db = os.path.join(old_data_dir, "database.sqlite")
         if os.path.exists(old_db) and not os.path.exists(LOCAL_DB_PATH):
-            try:
-                shutil.copy2(old_db, LOCAL_DB_PATH)
-            except: pass
-        
-        # settings & templates
-        for filename in ["templates.json", "user_settings.json"]:
-            old_file = os.path.join(old_data_dir, filename)
-            new_file = os.path.join(USER_SETTINGS_PATH, filename)
-            if os.path.exists(old_file) and not os.path.exists(new_file):
-                try:
-                    shutil.copy2(old_file, new_file)
-                except: pass
-
-        # license.dat
-        old_lfile = os.path.join(old_data_dir, "license.dat")
-        if os.path.exists(old_lfile) and not os.path.exists(new_lic):
-            try:
-                shutil.copy2(old_lfile, new_lic)
+            try: shutil.copy2(old_db, LOCAL_DB_PATH)
             except: pass
 
-    # 2. Migrate from old persistent directory (NPlace-DB -> Map_DB)
-    old_nplace_dir = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "NPlace-DB")
-    if os.path.exists(old_nplace_dir) and not os.path.exists(LOCAL_DB_PATH):
+    # 2. Migrate from old persistent Map_DB directory (Documents/MarketingMonster/Map_DB)
+    old_mapdb_dir = os.path.join(os.path.expanduser("~"), "Documents", "MarketingMonster", "Map_DB")
+    if os.path.exists(old_mapdb_dir) and not os.path.exists(LOCAL_DB_PATH):
         try:
-            old_nplace_db = os.path.join(old_nplace_dir, "NPlace-DB.sqlite")
-            if os.path.exists(old_nplace_db):
-                shutil.copy2(old_nplace_db, LOCAL_DB_PATH)
-            else:
-                # If deleted (e.g. by reset tool), fallback to the latest backup from old DB directory
-                import glob
-                backups = glob.glob(os.path.join(old_nplace_dir, "DB", "db_*.sqlite"))
-                if backups:
-                    latest_backup = max(backups, key=os.path.getmtime)
-                    shutil.copy2(latest_backup, LOCAL_DB_PATH)
-        except Exception as e:
-            pass
+            old_mapdb_db = os.path.join(old_mapdb_dir, "Map_DB.sqlite")
+            if os.path.exists(old_mapdb_db):
+                shutil.copy2(old_mapdb_db, LOCAL_DB_PATH)
+        except: pass
 
     # Always create marker even if no files were found, to prevent future checks
     try:

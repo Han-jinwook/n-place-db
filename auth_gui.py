@@ -20,7 +20,7 @@ class AuthWindow(ctk.CTk):
 
         self.is_pro = is_pro
         build_label = "Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"
-        self.title(f"[{config.BRAND_NAME_KR}] Map_DB {build_label} 시작하기")
+        self.title(f"[{config.BRAND_NAME_KR}] N플레이스 DB {build_label} 시작하기")
         
         # Set Window Icon
         def resource_path(relative_path):
@@ -78,7 +78,7 @@ class AuthWindow(ctk.CTk):
                 logger.error(f"Logo load error: {e}")
 
         build_label = "Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"
-        self.label_title = ctk.CTkLabel(self.title_container, text=f"Map_DB {build_label}", 
+        self.label_title = ctk.CTkLabel(self.title_container, text=f"N플레이스 DB {build_label}", 
                                         font=("Arial", 36, "bold"), text_color="#A855F7")
         self.label_title.pack(side="left")
 
@@ -95,7 +95,7 @@ class AuthWindow(ctk.CTk):
         self.auth_stage.pack(fill="both", expand=True, padx=20, pady=20)
 
         build_label = "Trial" if getattr(config, 'BUILD_TYPE', 'PRO') == "TRIAL" else "Pro"
-        self.lbl_auth_title = ctk.CTkLabel(self.auth_stage, text=f"Map_DB {build_label}", 
+        self.lbl_auth_title = ctk.CTkLabel(self.auth_stage, text=f"N플레이스 DB {build_label}", 
                                            font=("Arial", 22, "bold"), text_color=self.text_white)
         self.lbl_auth_title.pack(pady=(10, 5))
         
@@ -132,7 +132,7 @@ class AuthWindow(ctk.CTk):
             self.lbl_welcome.pack(pady=(10, 10))
 
             self.lbl_trial_desc = ctk.CTkLabel(self.welcome_stage, 
-                                               text="Map_DB Pro의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[무기한, 총 100건 제공]", 
+                                               text="N플레이스 DB Pro의 강력한 기능을\n지금 바로 무료로 체험해보세요.\n\n[무기한, 총 100건 제공]", 
                                                font=("Arial", 16, "bold"), text_color="#A855F7", justify="center")
             self.lbl_trial_desc.pack(pady=(0, 25))
 

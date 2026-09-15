@@ -10,7 +10,7 @@ def build_version(v, build_type, pyarmor_runtime):
     print(f"=========================================\n")
 
     # PyInstaller Arguments
-    exe_name = f"Map_DB-{build_type}"
+    exe_name = f"NPlace-DB-{build_type}"
     args = [
         'NPlace_DB_Launcher.py',              
         f'--name={exe_name}',
@@ -59,10 +59,10 @@ def build_version(v, build_type, pyarmor_runtime):
     try:
         PyInstaller.__main__.run(args)
         
-        # Rename the output folder to dist/Map_DB-v{v}/Map_DB-{build_type}-v{v}
+        # Rename the output folder to dist/NPlace-DB-v{v}/NPlace-DB-{build_type}-v{v}
         src_dir = os.path.join("dist", exe_name)
-        dst_parent = os.path.join("dist", f"Map_DB-v{v}")
-        dst_dir = os.path.join(dst_parent, f"Map_DB-{build_type}-v{v}")
+        dst_parent = os.path.join("dist", f"NPlace-DB-v{v}")
+        dst_dir = os.path.join(dst_parent, f"NPlace-DB-{build_type}-v{v}")
         print(f"Renaming compiled directory {src_dir} to {dst_dir}...")
         if not os.path.exists(dst_parent):
             os.makedirs(dst_parent, exist_ok=True)

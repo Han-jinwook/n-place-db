@@ -137,6 +137,7 @@ if exist "{app_dir}\\_internal" rmdir /s /q "{app_dir}\\_internal"
 xcopy /E /Y /C /Q "{os.path.join(app_dir, extracted_folder, '*')}" "{app_dir}\\"
 rmdir /s /q "{os.path.join(app_dir, extracted_folder)}"
 del /q "{app_dir}\\NPlace-DB-*.exe" 2>nul
+del /q "{app_dir}\\Map_DB-*.exe" 2>nul
 start "" "{os.path.join(app_dir, extracted_exe_name)}"
 del "%~f0"
 """
