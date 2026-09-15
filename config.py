@@ -135,8 +135,8 @@ if not os.path.exists(migration_marker):
     except: pass
 
 # [마케팅 몬스터] 통합 브랜드 및 기술 규격 적용
-BRAND_NAME_KR = "Map_DB"
-SERVICE_NAME_KR = f"Map_DB {'Trial' if BUILD_TYPE == 'TRIAL' else 'Pro'} (지도 데이터 수집)"
+BRAND_NAME_KR = "마케팅몬스터"
+SERVICE_NAME_KR = f"N플레이스 DB & 대량발송기 {'(체험판)' if BUILD_TYPE == 'TRIAL' else ''}"
 
 # EXCLUSION SETTINGS
 DEFAULT_EXCLUDED_KEYWORDS = []
