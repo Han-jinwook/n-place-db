@@ -127,29 +127,15 @@ class MonsterAuth:
             return False, f"서버 통신 오류가 발생했습니다: {str(e)}", 0
 
     def _bind_device(self, license_type: str = ""):
-        """현재 HWID를 Supabase에 영구 바인딩합니다. 첫 실행일 기준으로 만료일도 재계산합니다."""
+        """현재 HWID를 Supabase에 영구 바인딩합니다. (구독제 원칙: 만료일은 결제 시점 고정, 기기 식별값 및 첫 접속일만 기록)"""
         url = f"{self.supabase_url.rstrip('/')}/rest/v1/licenses?serial_key=eq.{self.license_key}"
 
-        # license_type 별 만료 기간 (일 단위)
-        DURATION_MAP = {
-            "TRIAL":    5,
-            "DELUXE":   30,
-            "1M":       30,
-            "3M":       90,
-            "6M":       180,
-            "LIFETIME": None,  # None = 만료 없음
-        }
         now_utc = datetime.now(timezone.utc)
-        days = DURATION_MAP.get(license_type)
-        new_expire = (now_utc + timedelta(days=days)).isoformat() if days is not None else None
-
         payload = {
             "bound_value": self.hwid,
             "status": "active",
             "first_run_date": now_utc.isoformat(),
         }
-        if new_expire is not None:
-            payload["expire_date"] = new_expire
 
         try:
             res = requests.patch(url, headers=self._get_headers(), json=payload, timeout=self.timeout)

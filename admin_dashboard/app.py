@@ -1490,7 +1490,8 @@ if st.session_state['active_page'] == 'Shop Search':
                         if AuthManager.get_serial_key() == "TRIAL-MODE":
                             AuthManager.get_and_sync_trial_used_count()
                             
-                        limit = AuthManager.get_remaining_collection_limit()
+                        limit_fn = getattr(AuthManager, 'get_remaining_collection_limit', getattr(AuthManager, 'get_collection_limit', lambda: None))
+                        limit = limit_fn()
                         is_paid = AuthManager.check_license_status() and AuthManager.get_serial_key() != "TRIAL-MODE"
                         final_limit = limit if limit is not None else (99999 if is_paid else 50)
                         filter_mode_map = {"전체(상호/업종/메뉴 포함)": "all", "상호명 일치": "name", "업종명 일치": "category"}
