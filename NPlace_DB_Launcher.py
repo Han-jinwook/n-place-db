@@ -176,15 +176,30 @@ class MainApp(ctk.CTk):
         self.label_area.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
         self.entry_area = ctk.CTkEntry(self.input_frame, width=250, placeholder_text="예: 서울 강남구,인천,경기 부천시")
-
-        self.entry_area.grid(row=1, column=1, padx=10, pady=10)
+        self.entry_area.grid(row=1, column=1, padx=10, pady=10, sticky="w")
         self.entry_area.insert(0, "") # 기본값 제거
+
+        # [NEW] 전국 전수 수집 체크박스 (249개 시·군·구 순차 정밀 순회)
+        self.var_nationwide = ctk.BooleanVar(value=False)
+        self.chk_nationwide = ctk.CTkCheckBox(
+            self.input_frame, 
+            text="전국 전수 수집 (249개 시·군·구)", 
+            variable=self.var_nationwide,
+            command=self.toggle_nationwide_mode,
+            font=("Arial", 12, "bold"),
+            fg_color=self.accent_green,
+            hover_color="#00c853"
+        )
+        self.chk_nationwide.grid(row=1, column=2, padx=10, pady=10, sticky="w")
 
         self.label_exclude = ctk.CTkLabel(self.input_frame, text="제외 키워드 (콤마로 구분):")
         self.label_exclude.grid(row=2, column=0, padx=10, pady=10, sticky="w")
 
         self.entry_exclude = ctk.CTkEntry(self.input_frame, width=250, placeholder_text="예: 태닝, 마사지, 왁싱")
-        self.entry_exclude.grid(row=2, column=1, padx=10, pady=10)
+        self.entry_exclude.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+
+        self.label_count = ctk.CTkLabel(self.input_frame, text="수집 목표 건수:")
+        self.label_count.grid(row=3, column=0, padx=10, pady=10, sticky="w")
 
         self.entry_count = ctk.CTkEntry(self.input_frame, width=100)
         self.entry_count.grid(row=3, column=1, padx=10, pady=10, sticky="w")
@@ -294,11 +309,31 @@ class MainApp(ctk.CTk):
         self.log_text.see("end")
         self.log_text.configure(state="disabled")
 
+    def toggle_nationwide_mode(self):
+        """전국 전수 수집 모드 토글 핸들러"""
+        if self.var_nationwide.get():
+            self.entry_area.configure(state="normal")
+            self.entry_area.delete(0, "end")
+            self.entry_area.insert(0, "전국 (249개 시·군·구 전수 순회)")
+            self.entry_area.configure(state="disabled")
+            if self.entry_count.get() == "100":
+                self.entry_count.delete(0, "end")
+                self.entry_count.insert(0, "5000")
+        else:
+            self.entry_area.configure(state="normal")
+            self.entry_area.delete(0, "end")
+            if self.entry_count.get() == "5000":
+                self.entry_count.delete(0, "end")
+                self.entry_count.insert(0, "100")
+
     def start_crawling(self):
         if self.is_running: return
         
         keyword = self.entry_keyword.get().strip()
-        area = self.entry_area.get().strip()
+        if self.var_nationwide.get():
+            area = "전국"
+        else:
+            area = self.entry_area.get().strip()
         count = self.entry_count.get().strip()
         exclude = self.entry_exclude.get().strip()
 
@@ -499,8 +534,8 @@ class MainApp(ctk.CTk):
     def export_to_excel(self):
         self.log("📊 엑셀 내보내기 시작...")
         try:
-            keyword = self.entry_keyword.get().strip()
-            area = self.entry_area.get().strip()
+            raw_area = self.entry_area.get().strip()
+            area = "전국" if (self.var_nationwide.get() or "전국" in raw_area) else raw_area
             prefix = f"{area}_{keyword}" if (area and keyword) else (area or keyword or "N플레이스")
             from exporter import export_to_xlsx
             file_path = export_to_xlsx(prefix=prefix)
